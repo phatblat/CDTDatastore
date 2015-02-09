@@ -72,6 +72,12 @@
                <FileRef
                   location = "group:Classes/common/CDTReplicator/ByDocId/CDTPullerByDocId.m">
                </FileRef>
+               <FileRef
+                  location = "group:Classes/common/CDTReplicator/ByDocId/CDTCachingDatastore.h">
+               </FileRef>
+               <FileRef
+                  location = "group:Classes/common/CDTReplicator/ByDocId/CDTCachingDatastore.m">
+               </FileRef>
             </Group>
             <FileRef
                location = "group:CDTAbstractReplication.h">
