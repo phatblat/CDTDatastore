@@ -15,6 +15,7 @@
 
 #import "CDTDatastoreManager.h"
 #import "CDTDatastore.h"
+#import "CDTReadOnlyDatastore.h"
 
 #import "TD_DatabaseManager.h"
 #import "TD_Database.h"
@@ -56,6 +57,31 @@ NSString *const CDTExtensionsDirName = @"_extensions";
                 NSLocalizedFailureReasonErrorKey : NSLocalizedString(@"Invalid name?", nil),
                 NSLocalizedRecoverySuggestionErrorKey : NSLocalizedString(@"Invalid name?", nil)
             };
+            *error = [NSError errorWithDomain:CDTDatastoreErrorDomain code:400 userInfo:userInfo];
+        }
+        return nil;
+    }
+}
+
+- (CDTReadOnlyDatastore*)readOnlyDataStoreNamed:(NSString*)name
+                                         withIds:(NSArray*)ids
+                                           error:(NSError *__autoreleasing *)error
+{
+    // TODO
+    
+    TD_Database *db = [self.manager databaseNamed:name];
+
+    
+    if (db) {
+        // ids?
+        return [[CDTReadOnlyDatastore alloc] initWithDatabase:db ids:ids];
+    } else {
+        if (error) {
+            NSDictionary *userInfo = @{
+                                       NSLocalizedDescriptionKey : NSLocalizedString(@"Couldn't create database.", nil),
+                                       NSLocalizedFailureReasonErrorKey : NSLocalizedString(@"Invalid name?", nil),
+                                       NSLocalizedRecoverySuggestionErrorKey : NSLocalizedString(@"Invalid name?", nil)
+                                       };
             *error = [NSError errorWithDomain:CDTDatastoreErrorDomain code:400 userInfo:userInfo];
         }
         return nil;
