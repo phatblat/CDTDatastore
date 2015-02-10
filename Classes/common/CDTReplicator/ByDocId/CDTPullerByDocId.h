@@ -17,6 +17,13 @@
 /** Called when replication is complete */
 @property (nonatomic,copy) void(^completionBlock)();
 
+/**
+ Initialise a CDTPullerByDocId.
+ 
+ @param source Source database URL
+ @param target Target local database
+ @param docIdsToPull List of documents to replicate.
+ */
 -(instancetype)initWithSource:(NSURL*)source
                        target:(CDTDatastore*)target
                  docIdsToPull:(NSArray*)docIdsToPull;
