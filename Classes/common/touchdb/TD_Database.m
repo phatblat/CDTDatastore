@@ -1303,4 +1303,26 @@ const TDChangesOptions kDefaultTDChangesOptions = {UINT_MAX, 0, NO, NO, YES};
     return [self getDocsWithIDs:nil options:options];
 }
 
+- (NSArray*)revsDiffWithDocId:(const NSString *)docId revIds:(NSArray *)revIds {
+    
+    NSMutableArray *placeHolders = [NSMutableArray array];
+    for (int i=0;i<revIds.count;i++) {
+        [placeHolders addObject:@"?"];
+    }
+    
+    NSString *query = [NSString stringWithFormat:@"SELECT revid FROM revs WHERE revid NOT IN (%@)",[placeHolders componentsJoinedByString:@", "]];
+    
+    NSMutableArray *revIdsResult = [NSMutableArray array];
+
+    [_fmdbQueue inDatabase:^(FMDatabase* db) {
+        FMResultSet* results = [db executeQuery:query withArgumentsInArray:revIds];
+        while ([results next]) {
+            NSString *revId = [results stringForColumn:@"revid"];
+            [revIdsResult addObject:revId];
+        }
+    }];
+    
+    return revIdsResult;
+}
+
 @end

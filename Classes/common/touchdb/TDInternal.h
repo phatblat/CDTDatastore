@@ -92,6 +92,7 @@
 - (NSString*)lastSequenceWithCheckpointID:(NSString*)checkpointID;
 - (BOOL)setLastSequence:(NSString*)lastSequence withCheckpointID:(NSString*)checkpointID;
 + (NSString*)joinQuotedStrings:(NSArray*)strings;
+- (NSArray*)revsDiffWithDocId:(const NSString *)docId revIds:(NSArray *)revIds;
 @end
 
 @interface TD_View ()

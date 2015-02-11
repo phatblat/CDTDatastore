@@ -37,6 +37,8 @@
 #import "TDStatus.h"
 #import "DBQueryUtils.h"
 
+#import "TDInternal.h"
+
 @interface DatastoreCRUD : CloudantSyncTests
 
 @property (nonatomic,strong) CDTDatastore *datastore;
@@ -1789,5 +1791,38 @@
     TDStatus statusResults = [self.datastore.database compact];
     XCTAssertTrue([TDStatusToNSError( statusResults, nil) code] == 200, @"TDStatusAsNSError: %@", TDStatusToNSError( statusResults, nil));
     
+}
+
+-(void)testRevsDiff
+{
+    // create 1 root doc and n child docs, each one a child of the last
+    // call revsDiff with half of the docs (alternating), and see that
+    // we get the other half back
+    NSError *error;
+    
+    NSString *docId = @"test-doc";
+    NSMutableArray *revIds = [NSMutableArray array];
+    int depth = 10;
+
+    CDTMutableDocumentRevision *rev = [CDTMutableDocumentRevision revision];
+    rev.docId = docId;
+    rev.body = [@{@"hello": @"world"} mutableCopy];
+    CDTDocumentRevision *ob = [self.datastore createDocumentFromRevision:rev error:&error];
+    NSString *revId = ob.revId;
+    
+    for (int i=0;i<depth;i++) {
+        if (i%2 == 0) {
+            [revIds addObject:revId];
+        }
+        CDTMutableDocumentRevision *rev = [CDTMutableDocumentRevision revision];
+        rev.sourceRevId = revId;
+        rev.docId = docId;
+        rev.body = [@{@"hello": @"world"} mutableCopy];
+        CDTDocumentRevision *ob = [self.datastore updateDocumentFromRevision:rev error:&error];
+        revId = ob.revId;
+    }
+    
+    NSArray *diff = [[self.datastore database] revsDiffWithDocId:docId revIds:revIds];
+    XCTAssertEqual([diff count], depth/2 +1);
 }
 @end
