@@ -106,8 +106,35 @@
 
 #pragma mark Test we bring in only given docs
 
-// TODO add tests for conflicted document trees, like those created by bulk_threeDivergedUpdatesForSameDocument_conflictsMustBeCreated on android
 
+-(void) testPullConflictedTree {
+    // test we can pull a tree with 3 leaf nodes correctly
+    
+    NSURL *bulk_url = [self.primaryRemoteDatabaseURL URLByAppendingPathComponent:@"_bulk_docs"];
+    
+    NSDictionary* headers = @{@"accept": @"application/json",
+                              @"content-type": @"application/json"};
+    
+    // TODO may be better to have this in a file somewhere
+    NSString *bulkDocs = @"{ \"new_edits\": false, \"docs\": [ { \"_id\": \"ee6f1a2e50b7604488583743cf059bbb\", \"_rev\": \"2-2160e38c92a64fcb930da194c697ac80\", \"hello\": \"world\", \"name\": \"Alex\", \"_revisions\": { \"start\": 2, \"ids\": [ \"2160e38c92a64fcb930da194c697ac80\", \"15f65339921e497348be384867bb940f\" ] } }, { \"_id\": \"ee6f1a2e50b7604488583743cf059bbb\", \"_rev\": \"2-6bd05cbf6d2d4f74985db8933383ef50\", \"hello\": \"world\", \"name\": \"Jerry\", \"_revisions\": { \"start\": 2, \"ids\": [ \"6bd05cbf6d2d4f74985db8933383ef50\", \"15f65339921e497348be384867bb940f\" ] } }, { \"_id\": \"ee6f1a2e50b7604488583743cf059bbb\", \"_rev\": \"3-43c0852c78da4fe7b366a79620f3f1f3\", \"hello\": \"world\", \"name\": \"Tom\", \"_revisions\": { \"start\": 3, \"ids\": [ \"43c0852c78da4fe7b366a79620f3f1f3\", \"d4c592ab1aa74340af26a878b535073a\", \"15f65339921e497348be384867bb940f\" ] } } ]}";
+    
+    UNIHTTPStringResponse* response = [[UNIRest postEntity:^(UNIBodyRequest* request) {
+        [request setUrl:[bulk_url absoluteString]];
+        [request setHeaders:headers];
+        [request setBody:[bulkDocs dataUsingEncoding:NSUTF8StringEncoding]];
+    }] asString];
+    
+    NSString *docId = @"ee6f1a2e50b7604488583743cf059bbb";
+    NSArray *filterDocIds = @[docId];
+    
+    [self replicateFrom:self.primaryRemoteDatabaseURL
+                     to:self.datastore
+                 docIds:filterDocIds];
+    
+    XCTAssertNotNil([self.datastore getDocumentWithId:docId rev:@"2-2160e38c92a64fcb930da194c697ac80" error:nil]);
+    XCTAssertNotNil([self.datastore getDocumentWithId:docId rev:@"2-6bd05cbf6d2d4f74985db8933383ef50" error:nil]);
+    XCTAssertNotNil([self.datastore getDocumentWithId:docId rev:@"3-43c0852c78da4fe7b366a79620f3f1f3" error:nil]);
+}
 -(void) testPullClientFilterUpdates2 {
     // create n docs and pull a subset of them, filtered by ID
     // update them and pull the same subset, filtered by ID
