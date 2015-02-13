@@ -54,7 +54,8 @@
     NSError *innerError;
     CDTDocumentRevision *rev = [self.datastore getDocumentWithId:docId
                                                            error:&innerError];
-    
+ 
+    // TODO what if the id is not on the list of ids?
     if (rev == nil) {  // todo is error "not found"?
         
         BOOL timed_out = [self synchronouslyReplicateDocumentWithId:docId];

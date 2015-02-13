@@ -45,6 +45,10 @@
 		4510BA04F5FB481E882AF5EE /* libPods-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C61CF9A9D4564F53BC1F7321 /* libPods-ios.a */; };
 		86A30343408047EEBBF8EC4C /* libPods-ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C61CF9A9D4564F53BC1F7321 /* libPods-ios.a */; };
 		8E89B680A5F347559033D1B3 /* libPods-osx.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 97F72706FFD44D88B6E5E667 /* libPods-osx.a */; };
+		8ECE3DA21A8A5A09002AF8CA /* CDTCachingDatastoreTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8ECE3DA11A8A5A09002AF8CA /* CDTCachingDatastoreTests.m */; };
+		8ECE3DA31A8A6026002AF8CA /* CDTCachingDatastoreTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8ECE3DA11A8A5A09002AF8CA /* CDTCachingDatastoreTests.m */; };
+		8ECE3DA41A8A6027002AF8CA /* CDTCachingDatastoreTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8ECE3DA11A8A5A09002AF8CA /* CDTCachingDatastoreTests.m */; };
+		8ECE3DA51A8A6028002AF8CA /* CDTCachingDatastoreTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 8ECE3DA11A8A5A09002AF8CA /* CDTCachingDatastoreTests.m */; };
 		9F1F14ED19870B88003E9F0B /* ReplicatorDelegates.m in Sources */ = {isa = PBXBuildFile; fileRef = 9F1F14EC19870B88003E9F0B /* ReplicatorDelegates.m */; };
 		9F1F14EE19870B88003E9F0B /* ReplicatorDelegates.m in Sources */ = {isa = PBXBuildFile; fileRef = 9F1F14EC19870B88003E9F0B /* ReplicatorDelegates.m */; };
 		9FC2F12C19F070710032A074 /* ReplicatorURLProtocol.m in Sources */ = {isa = PBXBuildFile; fileRef = 9FC2F12B19F070710032A074 /* ReplicatorURLProtocol.m */; };
@@ -104,6 +108,7 @@
 		27ED10A1192CF8DB00F75E95 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		5E90CA923A123284AF6B8CE0 /* Pods-osx.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-osx.release.xcconfig"; path = "Pods/Target Support Files/Pods-osx/Pods-osx.release.xcconfig"; sourceTree = "<group>"; };
 		6A9AF7E2659CCF39B5454D35 /* Pods-ios.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ios.debug.xcconfig"; path = "Pods/Target Support Files/Pods-ios/Pods-ios.debug.xcconfig"; sourceTree = "<group>"; };
+		8ECE3DA11A8A5A09002AF8CA /* CDTCachingDatastoreTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CDTCachingDatastoreTests.m; sourceTree = "<group>"; };
 		97F72706FFD44D88B6E5E667 /* libPods-osx.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-osx.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		9F1F14EB19870B88003E9F0B /* ReplicatorDelegates.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ReplicatorDelegates.h; sourceTree = "<group>"; };
 		9F1F14EC19870B88003E9F0B /* ReplicatorDelegates.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ReplicatorDelegates.m; sourceTree = "<group>"; };
@@ -214,6 +219,7 @@
 				27A7E67F189973EE007FAF1C /* ReplicationAcceptance.m */,
 				27DFEEB618DB4A0D0052D487 /* Attachments.m */,
 				27A794211A66E2E6008BF288 /* CDTPullerByDocIdTests.m */,
+				8ECE3DA11A8A5A09002AF8CA /* CDTCachingDatastoreTests.m */,
 				27A7E67A189973EE007FAF1C /* Supporting Files */,
 				27A7E6AD189975B2007FAF1C /* CloudantReplicationBase.h */,
 				27A7E6AE189975B2007FAF1C /* CloudantReplicationBase.m */,
@@ -574,6 +580,7 @@
 				9F1F14ED19870B88003E9F0B /* ReplicatorDelegates.m in Sources */,
 				27A794221A66E2E6008BF288 /* CDTPullerByDocIdTests.m in Sources */,
 				9FC2F12C19F070710032A074 /* ReplicatorURLProtocol.m in Sources */,
+				8ECE3DA21A8A5A09002AF8CA /* CDTCachingDatastoreTests.m in Sources */,
 				27A7E6AF189975B2007FAF1C /* CloudantReplicationBase.m in Sources */,
 				27DFEEB718DB4A0D0052D487 /* Attachments.m in Sources */,
 			);
@@ -590,6 +597,7 @@
 				9F1F14EE19870B88003E9F0B /* ReplicatorDelegates.m in Sources */,
 				27A794231A66E2E6008BF288 /* CDTPullerByDocIdTests.m in Sources */,
 				9FC2F12D19F070710032A074 /* ReplicatorURLProtocol.m in Sources */,
+				8ECE3DA31A8A6026002AF8CA /* CDTCachingDatastoreTests.m in Sources */,
 				27A7E6B0189975B2007FAF1C /* CloudantReplicationBase.m in Sources */,
 				27DFEEB818DB4A0D0052D487 /* Attachments.m in Sources */,
 			);
@@ -602,6 +610,7 @@
 				27ED108F192CF8DB00F75E95 /* CDTAppDelegate.m in Sources */,
 				27ED108B192CF8DB00F75E95 /* main.m in Sources */,
 				27A794241A66E2E6008BF288 /* CDTPullerByDocIdTests.m in Sources */,
+				8ECE3DA41A8A6027002AF8CA /* CDTCachingDatastoreTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -612,6 +621,7 @@
 				27ED10AB192CF8FF00F75E95 /* ReplicationAcceptance.m in Sources */,
 				27ED10AC192CF8FF00F75E95 /* Attachments.m in Sources */,
 				27A794251A66E2E6008BF288 /* CDTPullerByDocIdTests.m in Sources */,
+				8ECE3DA51A8A6028002AF8CA /* CDTCachingDatastoreTests.m in Sources */,
 				27ED10AD192CF8FF00F75E95 /* CloudantReplicationBase.m in Sources */,
 				27ED10AE192CF8FF00F75E95 /* CloudantReplicationBase+CompareDb.m in Sources */,
 				27ED10AF192CF8FF00F75E95 /* ReplicationAcceptance+CRUD.m in Sources */,

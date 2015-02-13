@@ -47,7 +47,6 @@
 - (BOOL)compactWithError:(NSError *__autoreleasing *)error
 {
     // TODO throw exception?
-    klujdfklgjdflgjdf
     return NO;
 }
 

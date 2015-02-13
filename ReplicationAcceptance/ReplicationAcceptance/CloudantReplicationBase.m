@@ -11,6 +11,9 @@
 #import "CDTDatastoreManager.h"
 #import "CDTDatastore.h"
 
+#import "CDTLogging.h"
+#import "DDTTYLogger.h"
+
 #import <UNIRest.h>
 
 @implementation CloudantReplicationBase
@@ -18,6 +21,15 @@
 - (void)setUp
 {
     [super setUp];
+    
+    [DDLog addLogger:[DDTTYLogger sharedInstance]];
+    CDTChangeLogLevel(CDTINDEX_LOG_CONTEXT, DDLogLevelVerbose);
+    CDTChangeLogLevel(CDTREPLICATION_LOG_CONTEXT, DDLogLevelVerbose);
+    CDTChangeLogLevel(CDTDATASTORE_LOG_CONTEXT, DDLogLevelVerbose);
+    CDTChangeLogLevel(CDTDOCUMENT_REVISION_LOG_CONTEXT, DDLogLevelVerbose);
+    CDTChangeLogLevel(CDTTD_REMOTE_REQUEST_CONTEXT, DDLogLevelVerbose);
+    CDTChangeLogLevel(CDTTD_JSON_CONTEXT, DDLogLevelVerbose);
+    
     // Put setup code here; it will be run once, before the first test case.
 
     self.factoryPath = [self createTemporaryDirectoryAndReturnPath];
