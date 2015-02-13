@@ -174,7 +174,8 @@
      {"ok":{"_id":"ee6f1a2e50b7604488583743cf059bbb","_rev":"3-43c0852c78da4fe7b366a79620f3f1f3","hello":"world","name":"Tom"}}]
      */
     
-    NSString* path = $sprintf(@"%@?open_revs=all&revs=true", TDEscapeID(docId));
+    // TODO send atts_since so we don't pull unnecessary attachments
+    NSString* path = $sprintf(@"%@?open_revs=all&revs=true&attachments=true", TDEscapeID(docId));
 
     CDTLogVerbose(CDTREPLICATION_LOG_CONTEXT, @"%@: GET %@", self, path);
     

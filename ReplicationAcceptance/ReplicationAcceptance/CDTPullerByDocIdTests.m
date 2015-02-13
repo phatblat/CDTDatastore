@@ -106,6 +106,8 @@
 
 #pragma mark Test we bring in only given docs
 
+// TODO add tests for conflicted document trees, like those created by bulk_threeDivergedUpdatesForSameDocument_conflictsMustBeCreated on android
+
 -(void) testPullClientFilterUpdates2 {
     // create n docs and pull a subset of them, filtered by ID
     // update them and pull the same subset, filtered by ID
