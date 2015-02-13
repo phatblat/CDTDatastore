@@ -150,61 +150,13 @@
     
     // Sync for now
     for (NSString *docId in self.docIdsToPull) {
-//        [self pullMissingRemoteRevisions:docId ignoreMissingDocs:YES immediatelyInsert:YES];
         [self pullRemoteRevision:docId ignoreMissingDocs:YES immediatelyInsert:YES];
-//        [self pullRemoteRevision:docId ignoreMissingDocs:YES immediatelyInsert:YES];
     }
     return YES;
 }
-/*
-- (void) pullMissingRemoteRevisions:(NSString*)docId
-          ignoreMissingDocs:(BOOL)ignoreMissingDocs
-          immediatelyInsert:(BOOL)immediatelyInsert
-{
-    [self asyncTaskStarted];
 
-    
-    TD_Database *_db = self.target.database;
-    
-    TD_RevisionList *localRevs = [_db getAllRevisionsOfDocumentID:docId onlyCurrent:NO excludeDeleted:NO];
-    NSMutableArray *localRevsList = [NSMutableArray array];
-    for (TD_Revision *localRev in localRevs) {
-        [localRevsList addObject:localRev.revID];
-    }
-    NSDictionary *localRevsDict = @{docId: localRevsList};
-    NSLog(@"Looking for docid %@ with revids %@\n", docId, localRevsList);
-    __weak CDTPullerByDocId* weakSelf = self;
-    
-    
-    
-    
-    [self sendAsyncRequest:@"GET"
-                      path:[NSString stringWithFormat:@"%@?revs=true", docId]
-                      body:nil
-              onCompletion:^(NSDictionary* results, NSError* error) {
-                  NSLog(@"Result for docid %@ with revids %@ is %@\n", docId, localRevsList, results);
-                  __strong CDTPullerByDocId *strongSelf = weakSelf;
-                  if (error) {
-                      strongSelf.error = error;
-                      [strongSelf revisionFailed];
-                  } else if (results[@"_revisions"]) {
-                      int start = [results[@"_revisions"][@"start"] intValue];
-                      for (NSString *revId in results[@"_revisions"][@"ids"]) {
-                          NSString *fullRevId = [NSString stringWithFormat:@"%d-%@", start--, revId];
-                          NSLog(@"fetching %@ %@", docId, fullRevId);
-                          // iterate through results and call pullRemoteRevision for each
-                          [strongSelf pullRemoteRevision:docId revID:fullRevId ignoreMissingDocs:YES immediatelyInsert:YES];
-                       }
-                  } else {
-                      NSLog(@"???");
-                  }
-                  [strongSelf asyncTasksFinished:1];
-              }];
-}
-*/
-
-/*  Fetches the contents of a revision from the remote db, including its parent revision ID.
-    The contents are stored into rev.properties.
+/*  Fetch all leave revisions + history from remote and insert to local
+    TODO attachments
     Adapted from TDPuller.m 
  */
 - (void) pullRemoteRevision:(NSString*)docId
@@ -213,35 +165,17 @@
 {
     [self asyncTaskStarted];
 //    ++_httpConnectionCount;
-    
-    // TODO: 'pullMissingRemoteRevisions' is a better name
-    // - call revs_diff with the revids we have
-    // - process through the list of missing revids and download them
-    
-    TD_Database *_db = self.target.database;
-/*
-    - (TD_RevisionList*)getAllRevisionsOfDocumentID:(NSString*)docID
-onlyCurrent:(BOOL)onlyCurrent
-excludeDeleted:(BOOL)excludeDeleted
-database:(FMDatabase*)db
-  */
 
+    // get all leaf revisions by calling with open_revs=all
+    // get history info by calling with revs=true
+    /* sample output json:
+     [{"ok":{"_id":"ee6f1a2e50b7604488583743cf059bbb","_rev":"2-2160e38c92a64fcb930da194c697ac80","hello":"world","name":"Alex"}},
+     {"ok":{"_id":"ee6f1a2e50b7604488583743cf059bbb","_rev":"2-6bd05cbf6d2d4f74985db8933383ef50","hello":"world","name":"Jerry"}},
+     {"ok":{"_id":"ee6f1a2e50b7604488583743cf059bbb","_rev":"3-43c0852c78da4fe7b366a79620f3f1f3","hello":"world","name":"Tom"}}]
+     */
     
-    
-    // Construct a query. We want the revision history, and the bodies of attachments that have
-    // been added since the latest revisions we have locally.
-    // See: http://wiki.apache.org/couchdb/HTTP_Document_API#GET
-    // See: http://wiki.apache.org/couchdb/HTTP_Document_API#Getting_Attachments_With_a_Document
-//    NSString* path = $sprintf(@"%@?revid=%@&attachments=true", TDEscapeID(docId), TDEscapeID(revId));
     NSString* path = $sprintf(@"%@?open_revs=all&revs=true", TDEscapeID(docId));
-    /*
-    TD_Revision *rev = [_db getDocumentWithID:docId revisionID:nil];
-    
-    // Use atts_since so we don't pull attachments that we should already have
-    NSArray* knownRevs = [_db getPossibleAncestorRevisionIDs: rev limit: kMaxNumberOfAttsSince];
-    if (knownRevs.count > 0) {
-        path = [path stringByAppendingFormat:@"&atts_since=%@", joinQuotedEscaped(knownRevs)];
-    }*/
+
     CDTLogVerbose(CDTREPLICATION_LOG_CONTEXT, @"%@: GET %@", self, path);
     
     // Under ARC, using variable dl directly in the block given as an argument to initWithURL:...
@@ -255,11 +189,7 @@ database:(FMDatabase*)db
                                         onCompletion:^(id result, NSError *error) {
               __strong CDTPullerByDocId *strongSelf = weakSelf;
               
-              // OK, now we've got the response revision:
               if (error) {
-                  
-                  // TODO go through _revisions in this response and use our local revsDiff to figure out which revs are missing
-                  
                   // if ignoreMissingDocs is true, we know that some requests might 404
                   if (!(ignoreMissingDocs && error.code == 404)) {
                       strongSelf.error = error;
@@ -272,7 +202,6 @@ database:(FMDatabase*)db
                       // TODO check if we have this rev already
                       [revs addRev:[TD_Revision revisionWithProperties:rev[@"ok"]]];
                   }
-                  //gotRev.sequence = rev.sequence;
                   [strongSelf insertDownloads:[revs allRevisions]];  // increments changesProcessed
               }
               
@@ -397,47 +326,6 @@ static NSString* joinQuotedEscaped(NSArray* strings)
 {
     // Remember that some revisions failed to transfer, so we can later retry.
     ++_revisionsFailed;
-}
-
-
-// TODO this is cribbed from TDReplicator
-- (TDRemoteJSONRequest*)sendAsyncRequest:(NSString*)method
-                                    path:(NSString*)path
-                                    body:(id)body
-                            onCompletion:(TDRemoteRequestCompletionBlock)onCompletion
-{
-    CDTLogInfo(CDTREPLICATION_LOG_CONTEXT, @"%@: %@ %@", self, method, path);
-    NSURL* url;
-    if ([path hasPrefix:@"/"]) {
-        url = [[NSURL URLWithString:path relativeToURL:_source] absoluteURL];
-    } else {
-        url = TDAppendToURL(_source, path);
-    }
-    onCompletion = [onCompletion copy];
-    
-    // under ARC, using variable req used directly inside the block results in a compiler error (it
-    // could have undefined value).
-    __weak CDTPullerByDocId* weakSelf = self;
-    __block TDRemoteJSONRequest* req = nil;
-    req = [[TDRemoteJSONRequest alloc] initWithMethod:method
-                                                  URL:url
-                                                 body:body
-                                       requestHeaders:self.requestHeaders
-                                         onCompletion:^(id result, NSError* error) {
-                                             CDTPullerByDocId* strongSelf = weakSelf;
-//                                             [strongSelf removeRemoteRequest:req];
-                                             id<TDAuthorizer> auth = req.authorizer;
-                                             if (auth && auth != _authorizer && error.code != 401) {
-                                                 CDTLogInfo(CDTREPLICATION_LOG_CONTEXT,
-                                                            @"%@: Updated to %@", self, auth);
-                                                 _authorizer = auth;
-                                             }
-                                             onCompletion(result, error);
-                                         }];
-    req.authorizer = _authorizer;
-//    [self addRemoteRequest:req];
-    [req start];
-    return req;
 }
 
 @end
