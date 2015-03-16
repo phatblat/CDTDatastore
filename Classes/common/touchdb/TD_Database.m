@@ -31,10 +31,13 @@
 #import "FMDatabaseAdditions.h"
 #import "FMDatabase+LongLong.h"
 #import "FMDatabaseQueue.h"
+#import "CDTEncryptionKeyProviding.h"
 #import "CDTLogging.h"
 
 NSString* const TD_DatabaseWillCloseNotification = @"TD_DatabaseWillClose";
 NSString* const TD_DatabaseWillBeDeletedNotification = @"TD_DatabaseWillBeDeleted";
+
+NSString* const TD_DatabaseStandardSQLiteHeader = @"SQLite format 3";
 
 //@interface FMDatabaseCreator : NSObject
 //@end
@@ -79,13 +82,36 @@ static BOOL removeItemIfExists(NSString* path, NSError** outError)
     return [[_path stringByDeletingPathExtension] stringByAppendingString:@" attachments"];
 }
 
-+ (TD_Database*)createEmptyDBAtPath:(NSString*)path
++ (instancetype)createEmptyDBAtPath:(NSString*)path
+          withEncryptionKeyProvider:(id<CDTEncryptionKeyProviding>)provider
 {
     if (!removeItemIfExists(path, NULL)) return nil;
     TD_Database* db = [[self alloc] initWithPath:path];
     if (!removeItemIfExists(db.attachmentStorePath, NULL)) return nil;
-    if (![db open]) return nil;
+    if (![db openWithEncryptionKeyProvider:provider]) return nil;
     return db;
+}
+
++ (BOOL)isDatabaseEncryptedAtPath:(NSString *)path
+{
+    // Load file
+    NSData *data = [NSData dataWithContentsOfFile:path];
+    if (!data)
+    {
+        return NO;
+    }
+    
+    // Read first 15 bytes
+    char buffer[[TD_DatabaseStandardSQLiteHeader length] + 1];
+    memset(buffer, '\0', sizeof(buffer));
+    
+    [data getBytes:buffer length:(sizeof(buffer) - 1)];
+    
+    // Compare: if the file does not start with the default text, we assume that the
+    // file is encrypted
+    NSString *str = [NSString stringWithCString:buffer encoding:NSASCIIStringEncoding];
+    
+    return ![TD_DatabaseStandardSQLiteHeader isEqualToString:str];
 }
 
 - (id)initWithPath:(NSString*)path
@@ -112,7 +138,7 @@ static BOOL removeItemIfExists(NSString* path, NSError** outError)
                 withAttachments:(NSString*)attachmentsPath
                           error:(NSError**)outError
 {
-    Assert(!_open, @"Already-open database cannot be replaced");
+    Assert(![self isOpen], @"Already-open database cannot be replaced");
     NSString* dstAttachmentsPath = self.attachmentStorePath;
     NSFileManager* fmgr = [NSFileManager defaultManager];
     return [fmgr copyItemAtPath:databasePath toPath:_path error:outError] &&
@@ -173,7 +199,7 @@ static BOOL removeItemIfExists(NSString* path, NSError** outError)
     return YES;
 }
 
-// caller: -openFMDB Must run in FMDatabaseQueue block
+// caller: -openFMDBWithEncryptionKeyProvider: Must run in FMDatabaseQueue block
 - (BOOL)initialize:(NSString*)updates inDatabase:(FMDatabase*)db
 {
     if (nil != updates) {
@@ -193,47 +219,140 @@ static BOOL removeItemIfExists(NSString* path, NSError** outError)
 }
 
 // callers: -open, -compact
-- (BOOL)openFMDB
+- (BOOL)openFMDBWithEncryptionKeyProvider:(id<CDTEncryptionKeyProviding>)provider
 {
-    int flags = SQLITE_OPEN_FILEPROTECTION_COMPLETEUNLESSOPEN;
-    if (_readOnly)
-        flags |= SQLITE_OPEN_READONLY;
-    else
-        flags |= SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
-    CDTLogInfo(CDTDATASTORE_LOG_CONTEXT, @"Open %@ (flags=%X)", _path, flags);
-    _fmdbQueue = [FMDatabaseQueue databaseQueueWithPath:_path flags:flags];
-    if (!_fmdbQueue) return NO;
-
-    // Register CouchDB-compatible JSON collation functions:
-    [_fmdbQueue inDatabase:^(FMDatabase* db) {
-        sqlite3_create_collation(db.sqliteHandle, "JSON", SQLITE_UTF8, kTDCollateJSON_Unicode,
-                                 TDCollateJSON);
-        sqlite3_create_collation(db.sqliteHandle, "JSON_RAW", SQLITE_UTF8, kTDCollateJSON_Raw,
-                                 TDCollateJSON);
-        sqlite3_create_collation(db.sqliteHandle, "JSON_ASCII", SQLITE_UTF8, kTDCollateJSON_ASCII,
-                                 TDCollateJSON);
-        sqlite3_create_collation(db.sqliteHandle, "REVID", SQLITE_UTF8, NULL, TDCollateRevIDs);
-    }];
-
     __block BOOL result = YES;
-    __weak TD_Database* weakSelf = self;
-    [_fmdbQueue inDatabase:^(FMDatabase* db) {
-        // Stuff we need to initialize every time the database opens:
-        TD_Database* strongSelf = weakSelf;
-        if (![strongSelf initialize:@"PRAGMA foreign_keys = ON;" inDatabase:db]) result = NO;
-    }];
-    if (!result) {
-        return NO;
+    
+    // Cipher/Not cipher the database
+    NSString* key = [provider encryptionKey];
+    if (!key && [TD_Database isDatabaseEncryptedAtPath:_path]) {
+        CDTLogError(CDTDATASTORE_LOG_CONTEXT, @"No key provided, however the database is encrypted");
+        
+        result = NO;
+    }
+    
+    // Create database
+    FMDatabaseQueue* queue = nil;
+    
+    if (result) {
+#ifdef SQLITE_OPEN_FILEPROTECTION_COMPLETEUNLESSOPEN
+        int flags = SQLITE_OPEN_FILEPROTECTION_COMPLETEUNLESSOPEN;
+#else
+        int flags = kNilOptions;
+#endif
+        if (_readOnly) {
+            flags |= SQLITE_OPEN_READONLY;
+        } else {
+            flags |= SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+        }
+        CDTLogInfo(CDTDATASTORE_LOG_CONTEXT, @"Open %@ (flags=%X)", _path, flags);
+        
+        queue = [FMDatabaseQueue databaseQueueWithPath:_path flags:flags];
+        result = (queue != nil);
     }
 
-    return YES;
+    // Cipher database
+    if (result && key) {
+        [queue inDatabase:^(FMDatabase* db) {
+            result = [db setKey:key];
+            if (!result) {
+                CDTLogError(CDTDATASTORE_LOG_CONTEXT, @"Key to cipher database not set");
+            } else {
+                result = (sqlite3_exec(db.sqliteHandle, "SELECT count(*) FROM sqlite_master;",
+                                       NULL, NULL, NULL) == SQLITE_OK);
+                if (!result) {
+                    CDTLogError(CDTDATASTORE_LOG_CONTEXT, @"Wrong key");
+                }
+            }
+        }];
+    }
+
+    // Register CouchDB-compatible JSON collation functions:
+    if (result) {
+        [queue inDatabase:^(FMDatabase* db) {
+          sqlite3_create_collation(db.sqliteHandle, "JSON", SQLITE_UTF8, kTDCollateJSON_Unicode,
+                                   TDCollateJSON);
+          sqlite3_create_collation(db.sqliteHandle, "JSON_RAW", SQLITE_UTF8, kTDCollateJSON_Raw,
+                                   TDCollateJSON);
+          sqlite3_create_collation(db.sqliteHandle, "JSON_ASCII", SQLITE_UTF8, kTDCollateJSON_ASCII,
+                                   TDCollateJSON);
+          sqlite3_create_collation(db.sqliteHandle, "REVID", SQLITE_UTF8, NULL, TDCollateRevIDs);
+        }];
+    }
+
+    // Stuff we need to initialize every time the database opens:
+    if (result) {
+        __weak TD_Database* weakSelf = self;
+        [queue inDatabase:^(FMDatabase* db) {
+          TD_Database* strongSelf = weakSelf;
+          if (!strongSelf || ![strongSelf initialize:@"PRAGMA foreign_keys = ON;" inDatabase:db]) {
+              result = NO;
+          }
+        }];
+    }
+    
+    // Assign properties (if everything was OK)
+    if (result) {
+        _fmdbQueue = queue;
+        _keyProviderToOpenDB = provider;
+    } else if (queue) {
+        [queue close];
+    }
+
+    return result;
 }
 
 // callers: many things
-- (BOOL)open
+- (BOOL)isOpen
 {
-    if (_open) return YES;
-    if (![self openFMDB]) return NO;
+    return _open;
+}
+
+// callers: many things
+- (BOOL)isOpenWithEncryptionKeyProvider:(id<CDTEncryptionKeyProviding>)provider
+{
+    BOOL isValid = NO;
+    
+    if ([self isOpen]) {
+        isValid = [TD_Database sameEncryptionKeyIn:_keyProviderToOpenDB and:provider];
+        
+        if (!isValid) {
+            CDTLogError(CDTDATASTORE_LOG_CONTEXT, @"DB is open but key provided is wrong");
+        }
+    }
+    
+    return isValid;
+}
+
+// callers: -isOpenWithEncryptionKeyProvider:
++ (BOOL)sameEncryptionKeyIn:(id<CDTEncryptionKeyProviding>)thisProvider
+                        and:(id<CDTEncryptionKeyProviding>)otherProvider
+{
+    NSString *thisKey = [thisProvider encryptionKey];
+    NSString *otherKey = [otherProvider encryptionKey];
+    
+    BOOL sameKey = NO;
+    if (thisKey == nil) {
+        sameKey = (otherKey == nil);
+    } else {
+        sameKey = ((otherKey != nil) && [otherKey isEqualToString:thisKey]);
+    }
+
+    return sameKey;
+}
+
+// callers: many things
+- (BOOL)openWithEncryptionKeyProvider:(id<CDTEncryptionKeyProviding>)provider
+{
+    Assert(provider, @"Key provider is mandatory. Inform a nil provider instead");
+    
+    if ([self isOpen]) {
+         return [self isOpenWithEncryptionKeyProvider:provider];
+    }
+    
+    if (![self openFMDBWithEncryptionKeyProvider:provider]) {
+        return NO;
+    }
 
     __block BOOL result = YES;
     __weak TD_Database* weakSelf = self;
@@ -425,7 +544,7 @@ static BOOL removeItemIfExists(NSString* path, NSError** outError)
 
 - (BOOL)close
 {
-    if (!_open) return NO;
+    if (![self isOpen]) return NO;
 
     CDTLogInfo(CDTDATASTORE_LOG_CONTEXT, @"Close %@", _path);
     [[NSNotificationCenter defaultCenter] postNotificationName:TD_DatabaseWillCloseNotification
@@ -438,9 +557,12 @@ static BOOL removeItemIfExists(NSString* path, NSError** outError)
     _activeReplicators = nil;
 
     [_fmdbQueue close];
+    _fmdbQueue = nil;
+    _keyProviderToOpenDB = nil;
 
     _open = NO;
     _transactionLevel = 0;
+    
     return YES;
 }
 
@@ -449,7 +571,7 @@ static BOOL removeItemIfExists(NSString* path, NSError** outError)
     CDTLogInfo(CDTDATASTORE_LOG_CONTEXT, @"Deleting %@", _path);
     [[NSNotificationCenter defaultCenter] postNotificationName:TD_DatabaseWillBeDeletedNotification
                                                         object:self];
-    if (_open) {
+    if ([self isOpen]) {
         if (![self close]) return NO;
     } else if (!self.exists) {
         return YES;

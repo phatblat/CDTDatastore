@@ -15,7 +15,11 @@
 
 #import <Foundation/Foundation.h>
 
+#ifdef ENCRYPT_DATABASE
+#import "CDTDatastoreManager+EncryptionKey.h"
+#else
 #import "CDTDatastoreManager.h"
+#endif
 #import "CDTDatastore.h"
 #import "CDTDatastore+Attachments.h"
 #import "CDTDocumentRevision.h"

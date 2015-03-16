@@ -19,8 +19,9 @@
 #import "CDTSQLiteHelpers.h"
 #import "CDTDocumentRevision.h"
 #import "CDTFieldIndexer.h"
-#import "CDTDatastore.h"
+#import "CDTDatastore+EncryptionKey.h"
 #import "CDTQueryBuilder.h"
+#import "CDTEncryptionKeyProviding.h"
 
 #import "CDTFetchChanges.h"
 
@@ -53,7 +54,7 @@ static const int VERSION = 1;
 
 - (BOOL)updateIndex:(CDTIndex *)index;
 
-- (BOOL)updateSchema:(int)currentVersion;
++ (BOOL)updateSchema:(int)currentVersion inDatabase:(FMDatabaseQueue *)database;
 
 @end
 
@@ -63,51 +64,21 @@ static const int VERSION = 1;
 
 - (id)initWithDatastore:(CDTDatastore *)datastore error:(NSError *__autoreleasing *)error
 {
-    BOOL success = YES;
     self = [super init];
     if (self) {
-        _datastore = datastore;
-        _indexFunctionMap = [[NSMutableDictionary alloc] init];
-        _validFieldRegexp = [[NSRegularExpression alloc] initWithPattern:kCDTIndexFieldNamePattern
-                                                                 options:0
-                                                                   error:error];
-
-        NSString *dir = [datastore extensionDataFolder:kCDTExtensionName];
-        [[NSFileManager defaultManager] createDirectoryAtPath:dir
-                                  withIntermediateDirectories:TRUE
-                                                   attributes:nil
-                                                        error:nil];
-        NSString *filename = [NSString pathWithComponents:@[ dir, @"indexes.sqlite" ]];
-        _database = [[FMDatabaseQueue alloc] initWithPath:filename];
-        if (!_database) {
-            // raise error
-            if (error) {
-                NSDictionary *userInfo = @{
-                    NSLocalizedDescriptionKey :
-                        NSLocalizedString(@"Problem opening or creating database.", nil)
-                        };
-                *error = [NSError errorWithDomain:CDTIndexManagerErrorDomain
-                                             code:CDTIndexErrorSqlError
-                                         userInfo:userInfo];
-            }
-            return nil;
-        }
-
-        success = [self updateSchema:VERSION];
-        if (!success) {
-            // raise error
-            if (error) {
-                NSDictionary *userInfo = @{
-                    NSLocalizedDescriptionKey :
-                        NSLocalizedString(@"Problem updating database schema.", nil)
-                        };
-                *error = [NSError errorWithDomain:CDTIndexManagerErrorDomain
-                                             code:CDTIndexErrorSqlError
-                                         userInfo:userInfo];
-            }
-            return nil;
+        _database = [CDTIndexManager databaseQueueWithDatastore:datastore error:error];
+        if (_database) {
+            _datastore = datastore;
+            _indexFunctionMap = [[NSMutableDictionary alloc] init];
+            _validFieldRegexp =
+                [[NSRegularExpression alloc] initWithPattern:kCDTIndexFieldNamePattern
+                                                     options:0
+                                                       error:error];
+        } else {
+            self = nil;
         }
     }
+
     return self;
 }
 
@@ -792,41 +763,6 @@ static const int VERSION = 1;
     return success;
 }
 
-- (BOOL)updateSchema:(int)currentVersion
-{
-    NSString *SCHEMA_INDEX =
-        @"CREATE TABLE _t_cloudant_sync_indexes_metadata ( " @"        name TEXT NOT NULL, "
-        @"        type INTEGER NOT NULL, " @"        last_sequence INTEGER NOT NULL);";
-
-    __block BOOL success = YES;
-
-    // get current version
-    [_database inTransaction:^(FMDatabase *db, BOOL *rollback) {
-        FMResultSet *results = [db executeQuery:@"pragma user_version;"];
-        [results next];
-        int version = 0;
-        if ([results hasAnotherRow]) {
-            version = [results intForColumnIndex:0];
-        }
-        if (version < currentVersion) {
-            // update version in pragma
-            // NB we format the entire sql here because pragma doesn't seem to allow ? placeholders
-            success =
-                success && [db executeUpdate:[NSString stringWithFormat:@"pragma user_version = %d",
-                                                                        currentVersion]];
-            success = success && [db executeUpdate:SCHEMA_INDEX];
-            if (!success) {
-                *rollback = YES;
-            }
-        } else {
-            success = YES;
-        }
-        [results close];
-    }];
-
-    return success;
-}
-
 - (BOOL)indexExists:(NSString *)indexName
         description:(NSString *)description
               error:(NSError *__autoreleasing *)error
@@ -883,6 +819,132 @@ static const int VERSION = 1;
         return NO;
     }
     return YES;
+}
+
+#pragma mark Private class methods
+
++ (FMDatabaseQueue *)databaseQueueWithDatastore:(CDTDatastore *)datastore
+                                          error:(NSError *__autoreleasing *)error
+{
+    NSString *dir = [datastore extensionDataFolder:kCDTExtensionName];
+    [[NSFileManager defaultManager] createDirectoryAtPath:dir
+                              withIntermediateDirectories:TRUE
+                                               attributes:nil
+                                                    error:nil];
+    NSString *filename = [NSString pathWithComponents:@[ dir, @"indexes.sqlite" ]];
+
+    FMDatabaseQueue *database = nil;
+    NSError *thisError = nil;
+    BOOL success = YES;
+
+    if (success) {
+        database = [[FMDatabaseQueue alloc] initWithPath:filename];
+
+        success = (database != nil);
+        if (!success) {
+            NSDictionary *userInfo = @{
+                NSLocalizedDescriptionKey :
+                    NSLocalizedString(@"Problem opening or creating database.", nil)
+            };
+            thisError = [NSError errorWithDomain:CDTIndexManagerErrorDomain
+                                            code:CDTIndexErrorSqlError
+                                        userInfo:userInfo];
+        }
+    }
+
+    if (success) {
+        id<CDTEncryptionKeyProviding> provider = [datastore copyEncryptionKeyProvider];
+
+        success = [CDTIndexManager configureDatabase:database withEncryptionKeyProvider:provider];
+
+        if (!success) {
+            NSDictionary *userInfo = @{
+                NSLocalizedDescriptionKey :
+                    NSLocalizedString(@"Problem configuring database with encryption key", nil)
+            };
+            thisError = [NSError errorWithDomain:CDTIndexManagerErrorDomain
+                                            code:CDTIndexErrorEncryptionKeyError
+                                        userInfo:userInfo];
+        }
+    }
+
+    if (success) {
+        success = [CDTIndexManager updateSchema:VERSION inDatabase:database];
+
+        if (!success) {
+            NSDictionary *userInfo = @{
+                NSLocalizedDescriptionKey :
+                    NSLocalizedString(@"Problem updating database schema.", nil)
+            };
+            thisError = [NSError errorWithDomain:CDTIndexManagerErrorDomain
+                                            code:CDTIndexErrorSqlError
+                                        userInfo:userInfo];
+        }
+    }
+
+    if (!success) {
+        database = nil;
+
+        if (error) {
+            *error = thisError;
+        }
+    }
+
+    return database;
+}
+
++ (BOOL)configureDatabase:(FMDatabaseQueue *)database
+withEncryptionKeyProvider:(id<CDTEncryptionKeyProviding>)provider
+{
+    __block BOOL success = YES;
+
+    NSString *key = [provider encryptionKey];
+    if (key) {
+        [database inDatabase:^(FMDatabase *db) {
+          success = [db setKey:key];
+        }];
+
+        if (!success) {
+            CDTLogError(CDTINDEX_LOG_CONTEXT, @"Key to cipher database not set");
+        }
+    }
+
+    return success;
+}
+
++ (BOOL)updateSchema:(int)currentVersion inDatabase:(FMDatabaseQueue *)database
+{
+    NSString *SCHEMA_INDEX =
+        @"CREATE TABLE _t_cloudant_sync_indexes_metadata ( " @"        name TEXT NOT NULL, "
+        @"        type INTEGER NOT NULL, " @"        last_sequence INTEGER NOT NULL);";
+
+    __block BOOL success = YES;
+
+    // get current version
+    [database inTransaction:^(FMDatabase *db, BOOL *rollback) {
+      FMResultSet *results = [db executeQuery:@"pragma user_version;"];
+      [results next];
+      int version = 0;
+      if ([results hasAnotherRow]) {
+          version = [results intForColumnIndex:0];
+      }
+      if (version < currentVersion) {
+          // update version in pragma
+          // NB we format the entire sql here because pragma doesn't seem to allow ? placeholders
+          success =
+              success && [db executeUpdate:[NSString stringWithFormat:@"pragma user_version = %d",
+                                                                      currentVersion]];
+          success = success && [db executeUpdate:SCHEMA_INDEX];
+          if (!success) {
+              *rollback = YES;
+          }
+      } else {
+          success = YES;
+      }
+      [results close];
+    }];
+
+    return success;
 }
 
 @end
