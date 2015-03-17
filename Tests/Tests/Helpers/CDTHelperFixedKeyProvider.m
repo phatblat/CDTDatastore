@@ -39,7 +39,7 @@
     return self;
 }
 
-#pragma mark - CDTEncryptionKeyProviding methods
+#pragma mark - CDTEncryptionKeyProvider methods
 - (NSString *)encryptionKey { return self.fixedKey; }
 
 #pragma mark - NSCopying methods

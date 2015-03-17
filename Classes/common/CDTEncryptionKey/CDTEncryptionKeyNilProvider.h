@@ -16,9 +16,9 @@
 
 #import <Foundation/Foundation.h>
 
-#import "CDTEncryptionKeyProviding.h"
+#import "CDTEncryptionKeyProvider.h"
 
-@interface CDTEncryptionKeyNilProvider : NSObject <CDTEncryptionKeyProviding>
+@interface CDTEncryptionKeyNilProvider : NSObject <CDTEncryptionKeyProvider>
 
 + (instancetype)provider;
 

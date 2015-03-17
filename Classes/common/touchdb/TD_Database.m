@@ -31,7 +31,7 @@
 #import "FMDatabaseAdditions.h"
 #import "FMDatabase+LongLong.h"
 #import "FMDatabaseQueue.h"
-#import "CDTEncryptionKeyProviding.h"
+#import "CDTEncryptionKeyProvider.h"
 #import "CDTLogging.h"
 
 NSString* const TD_DatabaseWillCloseNotification = @"TD_DatabaseWillClose";
@@ -88,7 +88,7 @@ static BOOL removeItemIfExists(NSString* path, NSError** outError)
 }
 
 + (instancetype)createEmptyDBAtPath:(NSString*)path
-          withEncryptionKeyProvider:(id<CDTEncryptionKeyProviding>)provider
+          withEncryptionKeyProvider:(id<CDTEncryptionKeyProvider>)provider
 {
     if (!removeItemIfExists(path, NULL)) return nil;
     TD_Database* db = [[self alloc] initWithPath:path];
@@ -229,7 +229,7 @@ static BOOL removeItemIfExists(NSString* path, NSError** outError)
 }
 
 // callers: -open, -compact
-- (BOOL)openFMDBWithEncryptionKeyProvider:(id<CDTEncryptionKeyProviding>)provider
+- (BOOL)openFMDBWithEncryptionKeyProvider:(id<CDTEncryptionKeyProvider>)provider
 {
     __block BOOL result = YES;
     
@@ -319,7 +319,7 @@ static BOOL removeItemIfExists(NSString* path, NSError** outError)
 }
 
 // callers: many things
-- (BOOL)isOpenWithEncryptionKeyProvider:(id<CDTEncryptionKeyProviding>)provider
+- (BOOL)isOpenWithEncryptionKeyProvider:(id<CDTEncryptionKeyProvider>)provider
 {
     BOOL isValid = NO;
     
@@ -335,8 +335,8 @@ static BOOL removeItemIfExists(NSString* path, NSError** outError)
 }
 
 // callers: -isOpenWithEncryptionKeyProvider:
-+ (BOOL)sameEncryptionKeyIn:(id<CDTEncryptionKeyProviding>)thisProvider
-                        and:(id<CDTEncryptionKeyProviding>)otherProvider
++ (BOOL)sameEncryptionKeyIn:(id<CDTEncryptionKeyProvider>)thisProvider
+                        and:(id<CDTEncryptionKeyProvider>)otherProvider
 {
     NSString *thisKey = [thisProvider encryptionKey];
     NSString *otherKey = [otherProvider encryptionKey];
@@ -352,7 +352,7 @@ static BOOL removeItemIfExists(NSString* path, NSError** outError)
 }
 
 // callers: many things
-- (BOOL)openWithEncryptionKeyProvider:(id<CDTEncryptionKeyProviding>)provider
+- (BOOL)openWithEncryptionKeyProvider:(id<CDTEncryptionKeyProvider>)provider
 {
     Assert(provider, @"Key provider is mandatory. Inform a nil provider instead");
     

@@ -137,7 +137,7 @@ iOS library for SQLite or [SQLCipher][SQLCipher].
 
 If [SQLCipher][SQLCipher] is not included but you try to create a `CDTDatastore`
 with a encryption key (providing an instance that conforms to protocol
-[CDTEncryptionKeyProviding][CDTEncryptionKeyProviding]), the operation will fail
+[CDTEncryptionKeyProvider][CDTEncryptionKeyProvider]), the operation will fail
 given that we lack the code to cipher the database. But it will succeed if the
 pod for [SQLCipher][SQLCipher] is in the workspace.
 
@@ -147,7 +147,7 @@ however the behaviour is different depending of the libraries included. The
 [SQLCipher][SQLCipher] while `CDTDatastore.xcworkspace` uses the default version
 of [FMDB][FMDB]. `EncryptionTests.xcworkspace` has a sub-set of the tests in
 `CDTDatastore.xcworkspace`, the tests in the former are expected to succeed
-when a key is provided while the tests in the second has to fail.
+when a key is provided while the tests in the second have to fail.
 
 If you want CDTDatastore to cipher the databases, you do not need to include
 [SQLCipher][SQLCipher] as a pod in your `Podfiles`, replace:
@@ -164,7 +164,7 @@ pod "CDTDatastore/SQLCipher"
 
 [SQLCipher]: https://www.zetetic.net/sqlcipher/
 [FMDB]: https://github.com/ccgus/fmdb
-[CDTEncryptionKeyProviding]: Classes/common/CDTEncryptionKey/CDTEncryptionKeyProviding.h
+[CDTEncryptionKeyProvider]: Classes/common/CDTEncryptionKey/CDTEncryptionKeyProvider.h
 
 ### Documentation
 

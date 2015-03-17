@@ -34,7 +34,7 @@
     return self;
 }
 
-#pragma mark - CDTEncryptionKeyProviding methods
+#pragma mark - CDTEncryptionKeyProvider methods
 - (NSString *)encryptionKey
 {
     NSString *key = self.thisKey;

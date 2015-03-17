@@ -16,7 +16,7 @@
 
 #import "CDTDatastore.h"
 
-@protocol CDTEncryptionKeyProviding;
+@protocol CDTEncryptionKeyProvider;
 
 @interface CDTDatastore (EncryptionKey)
 
@@ -29,11 +29,11 @@
  * @return an initialized datastore, or nil if an object could not be created
  */
 - (id)initWithDatabase:(TD_Database *)database
- encryptionKeyProvider:(id<CDTEncryptionKeyProviding>)provider;
+ encryptionKeyProvider:(id<CDTEncryptionKeyProvider>)provider;
 
 /**
  * Return a copy of the key used to encrypt the datastore
  */
-- (id<CDTEncryptionKeyProviding>)copyEncryptionKeyProvider;
+- (id<CDTEncryptionKeyProvider>)copyEncryptionKeyProvider;
 
 @end

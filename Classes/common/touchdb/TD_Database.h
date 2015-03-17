@@ -13,7 +13,7 @@
 #import "TDStatus.h"
 #import "TDMisc.h"
 
-@protocol CDTEncryptionKeyProviding;
+@protocol CDTEncryptionKeyProvider;
 
 @class FMDatabase, FMDatabaseQueue, TD_View, TDBlobStore;
 
@@ -61,7 +61,7 @@ extern const TDChangesOptions kDefaultTDChangesOptions;
     NSString* _path;
     NSString* _name;
     FMDatabaseQueue* _fmdbQueue;
-    id<CDTEncryptionKeyProviding> _keyProviderToOpenDB;
+    id<CDTEncryptionKeyProvider> _keyProviderToOpenDB;
     BOOL _readOnly;
     BOOL _open;
     int _transactionLevel;
@@ -87,7 +87,7 @@ extern const TDChangesOptions kDefaultTDChangesOptions;
  *
  * @return YES is the database is open and it was opened with the provided key. NO in other case.
  */
-- (BOOL)isOpenWithEncryptionKeyProvider:(id<CDTEncryptionKeyProviding>)provider;
+- (BOOL)isOpenWithEncryptionKeyProvider:(id<CDTEncryptionKeyProvider>)provider;
 
 /**
  * Open a database using a key to de-cipher its content. If the database does not exit before, it
@@ -98,7 +98,7 @@ extern const TDChangesOptions kDefaultTDChangesOptions;
  *
  * @return YES if the database is opened and initialised successfully. NO in other case
  */
-- (BOOL)openWithEncryptionKeyProvider:(id<CDTEncryptionKeyProviding>)provider;
+- (BOOL)openWithEncryptionKeyProvider:(id<CDTEncryptionKeyProvider>)provider;
 
 - (BOOL)close;
 - (BOOL)deleteDatabase:(NSError**)outError;
@@ -121,7 +121,7 @@ extern const TDChangesOptions kDefaultTDChangesOptions;
  * @return The next database or nil if there were an error
  */
 + (instancetype)createEmptyDBAtPath:(NSString*)path
-          withEncryptionKeyProvider:(id<CDTEncryptionKeyProviding>)provider;
+          withEncryptionKeyProvider:(id<CDTEncryptionKeyProvider>)provider;
 
 /**
  * Check if a SQLite database is encrypted. A SQLite file starts with 'SQLite format 3', this

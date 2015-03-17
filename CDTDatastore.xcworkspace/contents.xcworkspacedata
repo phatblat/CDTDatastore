@@ -155,7 +155,7 @@
                location = "group:CDTEncryptionKeyNilProvider.m">
             </FileRef>
             <FileRef
-               location = "group:CDTEncryptionKeyProviding.h">
+               location = "group:CDTEncryptionKeyProvider.h">
             </FileRef>
          </Group>
          <Group

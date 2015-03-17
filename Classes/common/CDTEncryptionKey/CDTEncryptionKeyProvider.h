@@ -1,5 +1,5 @@
 //
-//  CDTEncryptionKeyProviding.h
+//  CDTEncryptionKeyProvider.h
 //
 //
 //  Created by Enrique de la Torre Fernandez on 20/02/2015.
@@ -16,7 +16,7 @@
 
 #import <Foundation/Foundation.h>
 
-@protocol CDTEncryptionKeyProviding <NSCopying>
+@protocol CDTEncryptionKeyProvider <NSCopying>
 
 /**
  * Return a key that will be used to cipher the data in the datastore. If it returns nil, data will

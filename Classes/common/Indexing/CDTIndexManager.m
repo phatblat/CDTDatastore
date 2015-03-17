@@ -21,7 +21,7 @@
 #import "CDTFieldIndexer.h"
 #import "CDTDatastore+EncryptionKey.h"
 #import "CDTQueryBuilder.h"
-#import "CDTEncryptionKeyProviding.h"
+#import "CDTEncryptionKeyProvider.h"
 
 #import "CDTFetchChanges.h"
 
@@ -853,7 +853,7 @@ static const int VERSION = 1;
     }
 
     if (success) {
-        id<CDTEncryptionKeyProviding> provider = [datastore copyEncryptionKeyProvider];
+        id<CDTEncryptionKeyProvider> provider = [datastore copyEncryptionKeyProvider];
 
         success = [CDTIndexManager configureDatabase:database withEncryptionKeyProvider:provider];
 
@@ -894,7 +894,7 @@ static const int VERSION = 1;
 }
 
 + (BOOL)configureDatabase:(FMDatabaseQueue *)database
-withEncryptionKeyProvider:(id<CDTEncryptionKeyProviding>)provider
+withEncryptionKeyProvider:(id<CDTEncryptionKeyProvider>)provider
 {
     __block BOOL success = YES;
 

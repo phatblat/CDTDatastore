@@ -16,7 +16,7 @@
 
 #import "CDTDatastoreManager.h"
 
-@protocol CDTEncryptionKeyProviding;
+@protocol CDTEncryptionKeyProvider;
 
 @interface CDTDatastoreManager (EncryptionKey)
 
@@ -39,7 +39,7 @@
  @see CDTDatastore
  */
 - (CDTDatastore *)datastoreNamed:(NSString *)name
-       withEncryptionKeyProvider:(id<CDTEncryptionKeyProviding>)provider
+       withEncryptionKeyProvider:(id<CDTEncryptionKeyProvider>)provider
                            error:(NSError *__autoreleasing *)error;
 
 @end

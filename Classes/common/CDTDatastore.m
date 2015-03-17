@@ -40,7 +40,7 @@ NSString *const CDTDatastoreChangeNotification = @"CDTDatastoreChangeNotificatio
 
 @interface CDTDatastore ()
 
-@property (nonatomic, strong, readonly) id<CDTEncryptionKeyProviding> encryptionKeyProvider;
+@property (nonatomic, strong, readonly) id<CDTEncryptionKeyProvider> encryptionKeyProvider;
 
 - (void)TDdbChanged:(NSNotification *)n;
 - (BOOL)validateBodyDictionary:(NSDictionary *)body error:(NSError *__autoreleasing *)error;
@@ -61,13 +61,13 @@ NSString *const CDTDatastoreChangeNotification = @"CDTDatastoreChangeNotificatio
 }
 
 - (id)initWithDatabase:(TD_Database *)database
- encryptionKeyProvider:(id<CDTEncryptionKeyProviding>)provider
+ encryptionKeyProvider:(id<CDTEncryptionKeyProvider>)provider
 {
     Assert(provider, @"Key provider is mandatory. Inform a nil provider instead");
     
     self = [super init];
     if (self) {
-        id<CDTEncryptionKeyProviding> otherProvider = [provider copy];
+        id<CDTEncryptionKeyProvider> otherProvider = [provider copy];
         
         if (![database openWithEncryptionKeyProvider:otherProvider]) {
             self = nil;
@@ -168,7 +168,7 @@ NSString *const CDTDatastoreChangeNotification = @"CDTDatastoreChangeNotificatio
 
 - (NSString *)name { return self.database.name; }
 
-- (id<CDTEncryptionKeyProviding>)copyEncryptionKeyProvider
+- (id<CDTEncryptionKeyProvider>)copyEncryptionKeyProvider
 {
     return [_encryptionKeyProvider copy];
 }

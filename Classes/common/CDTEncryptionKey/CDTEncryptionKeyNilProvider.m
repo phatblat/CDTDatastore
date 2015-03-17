@@ -24,7 +24,7 @@
     return (object && [object isMemberOfClass:[CDTEncryptionKeyNilProvider class]]);
 }
 
-#pragma mark - CDTEncryptionKeyProviding methods
+#pragma mark - CDTEncryptionKeyProvider methods
 - (NSString *)encryptionKey { return nil; }
 
 #pragma mark - NSCopying methods

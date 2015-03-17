@@ -52,7 +52,7 @@ NSString *const CDTExtensionsDirName = @"_extensions";
 }
 
 - (CDTDatastore *)datastoreNamed:(NSString *)name
-       withEncryptionKeyProvider:(id<CDTEncryptionKeyProviding>)provider
+       withEncryptionKeyProvider:(id<CDTEncryptionKeyProvider>)provider
                            error:(NSError *__autoreleasing *)error
 {
     //    if (![TD_Database isValidDatabaseName:name]) {
