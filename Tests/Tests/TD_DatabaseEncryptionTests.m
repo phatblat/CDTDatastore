@@ -38,7 +38,22 @@
 
     // Check
     XCTAssertFalse([TD_Database isDatabaseEncryptedAtPath:path],
-                   @"If no key is provided, db should not be encrypted");
+                   @"If no key is provided, db should not be encrypted. Also encyption library is "
+                   @"not included");
+}
+
+- (void)testCreateEmptyWithFixedKeyProviderFails
+{
+    // Create db
+    CDTHelperFixedKeyProvider *provider = [[CDTHelperFixedKeyProvider alloc] init];
+
+    NSString *path = [NSTemporaryDirectory()
+        stringByAppendingPathComponent:@"TD_DatabaseEncryptionTests_DoCipherDb"];
+    TD_Database *db = [TD_Database createEmptyDBAtPath:path withEncryptionKeyProvider:provider];
+
+    // Check
+    XCTAssertNil(db,
+                 @"It is not possible to create an encrypted db without the corresponding library");
 }
 
 - (void)testOpenWithoutEncryptionKeyThrowsException
@@ -81,6 +96,38 @@
 
     XCTAssertFalse([db openWithEncryptionKeyProvider:fixedProvider],
                    @"A non-encrypted db can not be open with an encryption key");
+}
+
+- (void)testOpenFailsIfEncryptionKeyProviderReturnsAValueWithAnEncryptedDatabase
+{
+    // Load db
+    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+    NSString *path = [bundle pathForResource:@"emptyencrypteddb" ofType:@"touchdb"];
+
+    TD_Database *db = [[TD_Database alloc] initWithPath:path];
+
+    // Open with fixed key provider
+    CDTHelperFixedKeyProvider *fixedProvider = [[CDTHelperFixedKeyProvider alloc] init];
+
+    XCTAssertFalse([db openWithEncryptionKeyProvider:fixedProvider],
+                   @"Although the key provided is the key used to encrypt the database, the db can "
+                   @"not be opened without the encryption libary");
+}
+
+- (void)testOpenFailsIfEncryptionKeyProviderReturnsNilWithAnEncryptedDatabase
+{
+    // Load db
+    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+    NSString *path = [bundle pathForResource:@"emptyencrypteddb" ofType:@"touchdb"];
+
+    TD_Database *db = [[TD_Database alloc] initWithPath:path];
+
+    // Open with nil provider
+    CDTEncryptionKeyNilProvider *fixedProvider = [CDTEncryptionKeyNilProvider provider];
+
+    XCTAssertFalse([db openWithEncryptionKeyProvider:fixedProvider],
+                   @"An encrypted db can not be opened with or without key because there is not an "
+                   @"encryption library available");
 }
 
 - (void)testReopenWithoutEncryptionKeyThrowsException

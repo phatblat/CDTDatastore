@@ -58,6 +58,57 @@
         @"Non-encrypted db can not be opened with a key, so datastore can not initialised");
 }
 
+- (void)testDatastoreNamedReturnsNilIfEncryptionKeyProviderReturnsAValueAndDBIsEncrypted
+{
+    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+    NSString *path = [bundle pathForResource:@"emptyencrypteddb" ofType:@"touchdb"];
+
+    // Prepare factory
+    CDTDatastoreManager *customFactory =
+        [[CDTDatastoreManager alloc] initWithDirectory:[path stringByDeletingLastPathComponent]
+                                                 error:nil];
+
+    // Get datastore
+    CDTHelperFixedKeyProvider *fixedProvider = [[CDTHelperFixedKeyProvider alloc] init];
+
+    NSError *error = nil;
+    CDTDatastore *datastore =
+        [customFactory datastoreNamed:[[path lastPathComponent] stringByDeletingPathExtension]
+            withEncryptionKeyProvider:fixedProvider
+                                error:&error];
+
+    // Test
+    XCTAssertTrue(!datastore && error, @"Encrypted db can not be opened with key (although it is "
+                                       @"the same key used to encrypt it) because there is not an "
+                                       @"encryption library available, so datastore can not "
+                                       @"initialised");
+}
+
+- (void)testDatastoreNamedReturnsNilIfEncryptionKeyProviderReturnsNilAndDBIsEncrypted
+{
+    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+    NSString *path = [bundle pathForResource:@"emptyencrypteddb" ofType:@"touchdb"];
+
+    // Prepare factory
+    CDTDatastoreManager *customFactory =
+        [[CDTDatastoreManager alloc] initWithDirectory:[path stringByDeletingLastPathComponent]
+                                                 error:nil];
+
+    // Get datastore
+    CDTEncryptionKeyNilProvider *nilProvider = [CDTEncryptionKeyNilProvider provider];
+
+    NSError *error = nil;
+    CDTDatastore *datastore =
+        [customFactory datastoreNamed:[[path lastPathComponent] stringByDeletingPathExtension]
+            withEncryptionKeyProvider:nilProvider
+                                error:&error];
+
+    // Test
+    XCTAssertTrue(!datastore && error, @"An encrypted db can not be opened with or without key "
+                                       @"because there is not an encryption library available, so "
+                                       @"datastore can not initialised");
+}
+
 - (void)testDatastoreNamedThrowsExceptionIfKeyProviderIsNilAlthoughDBWasOpenedBefore
 {
     // Create non-encrypted db

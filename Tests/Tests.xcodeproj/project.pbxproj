@@ -128,6 +128,8 @@
 		CD7110451AB6282500558645 /* DatastoreManagerEncryptionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CD7110411AB6282500558645 /* DatastoreManagerEncryptionTests.m */; };
 		CD79FFE11A9B40FA00F5B5C5 /* IndexManagerEncryptionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CD79FFDF1A9B3E0F00F5B5C5 /* IndexManagerEncryptionTests.m */; };
 		CD79FFE71A9B478A00F5B5C5 /* IndexManagerEncryptionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CD79FFDF1A9B3E0F00F5B5C5 /* IndexManagerEncryptionTests.m */; };
+		CD94A6FE1AB8A24C006C8343 /* emptyencrypteddb.touchdb in Resources */ = {isa = PBXBuildFile; fileRef = CD94A6FD1AB8A24C006C8343 /* emptyencrypteddb.touchdb */; };
+		CD94A6FF1AB8A24C006C8343 /* emptyencrypteddb.touchdb in Resources */ = {isa = PBXBuildFile; fileRef = CD94A6FD1AB8A24C006C8343 /* emptyencrypteddb.touchdb */; };
 		CDE860371A97AF2B00828AC4 /* TD_DatabaseEncryptionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CDE860361A97AF2B00828AC4 /* TD_DatabaseEncryptionTests.m */; };
 		CDE860381A97AF2B00828AC4 /* TD_DatabaseEncryptionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CDE860361A97AF2B00828AC4 /* TD_DatabaseEncryptionTests.m */; };
 		CDEE6ED11AAF3C17002C96C0 /* CloudantTests+EncryptionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = CDEE6ED01AAF3C17002C96C0 /* CloudantTests+EncryptionTests.m */; };
@@ -226,6 +228,7 @@
 		CD7110401AB6282500558645 /* DatastoreEncryptionTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DatastoreEncryptionTests.m; sourceTree = "<group>"; };
 		CD7110411AB6282500558645 /* DatastoreManagerEncryptionTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DatastoreManagerEncryptionTests.m; sourceTree = "<group>"; };
 		CD79FFDF1A9B3E0F00F5B5C5 /* IndexManagerEncryptionTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IndexManagerEncryptionTests.m; sourceTree = "<group>"; };
+		CD94A6FD1AB8A24C006C8343 /* emptyencrypteddb.touchdb */ = {isa = PBXFileReference; lastKnownFileType = file; name = emptyencrypteddb.touchdb; path = Assets/emptyencrypteddb.touchdb; sourceTree = "<group>"; };
 		CDE860361A97AF2B00828AC4 /* TD_DatabaseEncryptionTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TD_DatabaseEncryptionTests.m; sourceTree = "<group>"; };
 		CDEE6ECF1AAF3C17002C96C0 /* CloudantTests+EncryptionTests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "CloudantTests+EncryptionTests.h"; sourceTree = "<group>"; };
 		CDEE6ED01AAF3C17002C96C0 /* CloudantTests+EncryptionTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "CloudantTests+EncryptionTests.m"; sourceTree = "<group>"; };
@@ -401,6 +404,7 @@
 			isa = PBXGroup;
 			children = (
 				27651C6319001B54006FEF7F /* bonsai-boston.jpg */,
+				CD94A6FD1AB8A24C006C8343 /* emptyencrypteddb.touchdb */,
 				27D96E4218E1E0D400DEA006 /* lorem.txt */,
 				8E82CAB01A83C3670046DA9D /* schema6to7upgrade.touchdb */,
 			);
@@ -544,6 +548,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CD94A6FE1AB8A24C006C8343 /* emptyencrypteddb.touchdb in Resources */,
 				27D96E4418E1E0D400DEA006 /* lorem.txt in Resources */,
 				8E82CAB11A83C3700046DA9D /* schema6to7upgrade.touchdb in Resources */,
 				27389E1A185345FD0027A404 /* InfoPlist.strings in Resources */,
@@ -555,6 +560,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CD94A6FF1AB8A24C006C8343 /* emptyencrypteddb.touchdb in Resources */,
 				27D96E4518E1E0D400DEA006 /* lorem.txt in Resources */,
 				8E82CAB21A83C3700046DA9D /* schema6to7upgrade.touchdb in Resources */,
 				27CCEDCD187AD64F006F3C66 /* InfoPlist.strings in Resources */,

@@ -74,6 +74,40 @@
         @"Non-encrypted db can not be opened with a key, so datastore can not initialised");
 }
 
+- (void)testInitReturnsNilIfEncryptionKeyProviderReturnsAValueAndDBIsEncrypted
+{
+    // Load db
+    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+    NSString *path = [bundle pathForResource:@"emptyencrypteddb" ofType:@"touchdb"];
+    
+    TD_Database *db = [[TD_Database alloc] initWithPath:path];
+    
+    // Init with fixed key provider
+    CDTHelperFixedKeyProvider *fixedProvider = [[CDTHelperFixedKeyProvider alloc] init];
+    
+    XCTAssertNil(
+                 [[CDTDatastore alloc] initWithDatabase:db encryptionKeyProvider:fixedProvider],
+                 @"Although the key provided is the key used to encrypt the database, the db can "
+                 @"not be opened without the encryption libary");
+}
+
+- (void)testInitReturnsNilIfEncryptionKeyProviderReturnsNilAndDBIsEncrypted
+{
+    // Load db
+    NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+    NSString *path = [bundle pathForResource:@"emptyencrypteddb" ofType:@"touchdb"];
+    
+    TD_Database *db = [[TD_Database alloc] initWithPath:path];
+    
+    // Init with fixed key provider
+    CDTEncryptionKeyNilProvider *fixedProvider = [CDTEncryptionKeyNilProvider provider];
+    
+    XCTAssertNil(
+                 [[CDTDatastore alloc] initWithDatabase:db encryptionKeyProvider:fixedProvider],
+                 @"An encrypted db can not be opened with or without key because there is not an "
+                 @"encryption library available");
+}
+
 - (void)testInitWithoutEncryptionKeyThrowsExceptionAlthoughDBIsAlreadyOpen
 {
     // Create non-encrypted db
