@@ -142,6 +142,40 @@
          <Group
             location = "group:CDTEncryptionKey"
             name = "CDTEncryptionKey">
+            <Group
+               location = "container:Classes/common/CDTEncryptionKey/CDTSecurity"
+               name = "CDTSecurity">
+               <FileRef
+                  location = "group:CDTSecurityConstants.h">
+               </FileRef>
+               <FileRef
+                  location = "group:CDTSecurityConstants.m">
+               </FileRef>
+               <FileRef
+                  location = "group:CDTSecurityManager.h">
+               </FileRef>
+               <FileRef
+                  location = "group:CDTSecurityManager.m">
+               </FileRef>
+               <FileRef
+                  location = "group:CDTSecurityUtils.h">
+               </FileRef>
+               <FileRef
+                  location = "group:CDTSecurityUtils.m">
+               </FileRef>
+               <FileRef
+                  location = "group:NSObject+CDTSecurityJSON.h">
+               </FileRef>
+               <FileRef
+                  location = "group:NSObject+CDTSecurityJSON.m">
+               </FileRef>
+               <FileRef
+                  location = "group:NSString+CDTSecurityJSON.h">
+               </FileRef>
+               <FileRef
+                  location = "group:NSString+CDTSecurityJSON.m">
+               </FileRef>
+            </Group>
             <FileRef
                location = "group:CDTDatastore+EncryptionKey.h">
             </FileRef>
