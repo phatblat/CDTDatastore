@@ -42,19 +42,19 @@
     NSString *salt = [storedDict objectForKey:CDTDATASTORE_SECURITY_KEY_SALT];
     NSString *pwKey = [self passwordToKey:password withSalt:salt];
     NSString *iv = [storedDict objectForKey:CDTDATASTORE_SECURITY_KEY_IV];
-    NSString *decryptedKey = [CDTSecurityUtils decryptWithKey:pwKey
-                                               withCipherText:dpk
-                                                       withIV:iv
-                                  decodeBase64AfterDecryption:NO
-                                          checkBase64Encoding:YES];
+    NSString *decryptedKey = [[CDTSecurityUtils util] decryptWithKey:pwKey
+                                                      withCipherText:dpk
+                                                              withIV:iv
+                                         decodeBase64AfterDecryption:NO
+                                                 checkBase64Encoding:YES];
 
     return decryptedKey;
 }
 
 - (BOOL)generateAndStoreDpkUsingPassword:(NSString *)password withSalt:(NSString *)salt
 {
-    NSString *hexEncodedDpk =
-        [CDTSecurityUtils generateRandomStringWithBytes:CDTDATASTORE_SECURITY_DEFAULT_DPK_SIZE];
+    NSString *hexEncodedDpk = [[CDTSecurityUtils util]
+        generateRandomStringWithBytes:CDTDATASTORE_SECURITY_DEFAULT_DPK_SIZE];
 
     BOOL worked = [self storeDPK:hexEncodedDpk usingPassword:password withSalt:salt];
 
@@ -99,13 +99,13 @@
 
     NSString *pwKey = [self passwordToKey:password withSalt:salt];
 
-    NSString *hexEncodedIv =
-        [CDTSecurityUtils generateRandomStringWithBytes:CDTDATASTORE_SECURITY_DEFAULT_IV_SIZE];
+    NSString *hexEncodedIv = [[CDTSecurityUtils util]
+        generateRandomStringWithBytes:CDTDATASTORE_SECURITY_DEFAULT_IV_SIZE];
 
-    NSString *encyptedDPK = [CDTSecurityUtils encryptWithKey:pwKey
-                                                    withText:dpk
-                                                      withIV:hexEncodedIv
-                                covertBase64BeforeEncryption:NO];
+    NSString *encyptedDPK = [[CDTSecurityUtils util] encryptWithKey:pwKey
+                                                           withText:dpk
+                                                             withIV:hexEncodedIv
+                                       covertBase64BeforeEncryption:NO];
 
     NSDictionary *jsonEntriesDict = @{
         CDTDATASTORE_SECURITY_KEY_IV : hexEncodedIv,
@@ -206,10 +206,10 @@
 
 - (NSString *)passwordToKey:(NSString *)password withSalt:(NSString *)salt
 {
-    return
-        [CDTSecurityUtils generateKeyWithPassword:password
-                                          andSalt:salt
-                                    andIterations:CDTDATASTORE_SECURITY_DEFAULT_PBKDF2_ITERATIONS];
+    return [[CDTSecurityUtils util]
+        generateKeyWithPassword:password
+                        andSalt:salt
+                  andIterations:CDTDATASTORE_SECURITY_DEFAULT_PBKDF2_ITERATIONS];
 }
 
 - (NSMutableDictionary *)getDpkDocumentLookupDict

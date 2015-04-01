@@ -16,7 +16,11 @@
 
 #import <Foundation/Foundation.h>
 
+#import "CDTSecurityBase64Utils.h"
+
 @interface CDTSecurityUtils : NSObject
+
+- (instancetype)initWithBase64Utils:(id<CDTSecurityBase64Utils>)base64Utils;
 
 /**
  * Generates a random string locally.
@@ -25,7 +29,7 @@
  *
  * @return The random string, nil if the operation fails
  */
-+ (NSString *)generateRandomStringWithBytes:(int)bytes;
+- (NSString *)generateRandomStringWithBytes:(int)bytes;
 
 /**
  * Encrypts an NSString by using a key and an Initialization Vector (IV).
@@ -37,7 +41,7 @@
  *
  * @return The encrypted text
  */
-+ (NSString *)encryptWithKey:(NSString *)key
+- (NSString *)encryptWithKey:(NSString *)key
                         withText:(NSString *)text
                           withIV:(NSString *)iv
     covertBase64BeforeEncryption:(BOOL)covertBase64BeforeEncryptionFlag;
@@ -52,7 +56,7 @@
  *
  * @return The decrypted text
  */
-+ (NSString *)decryptWithKey:(NSString *)key
+- (NSString *)decryptWithKey:(NSString *)key
                  withCipherText:(NSString *)ciphertext
                          withIV:(NSString *)iv
     decodeBase64AfterDecryption:(BOOL)decodeBase64AfterDecryption
@@ -67,8 +71,11 @@
  *
  * @return The generated key
  */
-+ (NSString *)generateKeyWithPassword:(NSString *)pass
+- (NSString *)generateKeyWithPassword:(NSString *)pass
                               andSalt:(NSString *)salt
                         andIterations:(NSInteger)iterations;
+
++ (instancetype)util;
++ (instancetype)utilWithBase64Utils:(id<CDTSecurityBase64Utils>)base64Utils;
 
 @end
