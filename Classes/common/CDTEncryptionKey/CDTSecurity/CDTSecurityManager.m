@@ -45,7 +45,6 @@
     NSString *decryptedKey = [[CDTSecurityUtils util] decryptWithKey:pwKey
                                                       withCipherText:dpk
                                                               withIV:iv
-                                         decodeBase64AfterDecryption:NO
                                                  checkBase64Encoding:YES];
 
     return decryptedKey;
@@ -74,7 +73,7 @@
 {
     BOOL worked = NO;
 
-    NSMutableDictionary* dict = [self getDpkDocumentLookupDict];
+    NSMutableDictionary *dict = [self getDpkDocumentLookupDict];
     [dict removeObjectForKey:(__bridge id)(kSecReturnData)];
     [dict removeObjectForKey:(__bridge id)(kSecMatchLimit)];
     [dict removeObjectForKey:(__bridge id)(kSecReturnAttributes)];
@@ -86,7 +85,7 @@
         worked = YES;
     } else {
         CDTLogWarn(CDTDATASTORE_LOG_CONTEXT,
-                   @"Error getting DPK doc from keychain, SecItemDelete returned: %d", err);
+                   @"Error getting DPK doc from keychain, SecItemDelete returned: %d", (int)err);
     }
 
     return worked;
@@ -102,10 +101,8 @@
     NSString *hexEncodedIv = [[CDTSecurityUtils util]
         generateRandomStringWithBytes:CDTDATASTORE_SECURITY_DEFAULT_IV_SIZE];
 
-    NSString *encyptedDPK = [[CDTSecurityUtils util] encryptWithKey:pwKey
-                                                           withText:dpk
-                                                             withIV:hexEncodedIv
-                                       covertBase64BeforeEncryption:NO];
+    NSString *encyptedDPK =
+        [[CDTSecurityUtils util] encryptWithKey:pwKey withText:dpk withIV:hexEncodedIv];
 
     NSDictionary *jsonEntriesDict = @{
         CDTDATASTORE_SECURITY_KEY_IV : hexEncodedIv,
@@ -128,7 +125,7 @@
         worked = NO;
     } else {
         CDTLogWarn(CDTDATASTORE_LOG_CONTEXT,
-                   @"Unable to store Doc in keychain, SecItemAdd returned: %d", err);
+                   @"Unable to store Doc in keychain, SecItemAdd returned: %d", (int)err);
         worked = NO;
     }
 
@@ -166,7 +163,8 @@
         }
     } else {
         CDTLogWarn(CDTDATASTORE_LOG_CONTEXT,
-                   @"Error getting DPK doc from keychain, SecItemCopyMatching returned: %d", err);
+                   @"Error getting DPK doc from keychain, SecItemCopyMatching returned: %d",
+                   (int)err);
     }
 
     return nil;
@@ -174,13 +172,13 @@
 
 - (BOOL)checkDpkDocumentIsInKeychain
 {
-    NSData* dpkData = nil;
+    NSData *dpkData = nil;
 
     OSStatus err = SecItemCopyMatching((__bridge CFDictionaryRef)[self getDpkDocumentLookupDict],
-                                       (void*)&dpkData);
+                                       (void *)&dpkData);
 
     if (err == noErr) {
-        NSString* dpk = [[NSString alloc] initWithBytes:[dpkData bytes]
+        NSString *dpk = [[NSString alloc] initWithBytes:[dpkData bytes]
                                                  length:[dpkData length]
                                                encoding:NSUTF8StringEncoding];
 
@@ -194,12 +192,13 @@
 
     } else if (err == errSecItemNotFound) {
         CDTLogWarn(CDTDATASTORE_LOG_CONTEXT, @"DPK doc not found in keychain");
-        
+
         return NO;
     } else {
         CDTLogWarn(CDTDATASTORE_LOG_CONTEXT,
-                   @"Error getting DPK doc from keychain, SecItemCopyMatching returned: %d", err);
-        
+                   @"Error getting DPK doc from keychain, SecItemCopyMatching returned: %d",
+                   (int)err);
+
         return NO;
     }
 }
