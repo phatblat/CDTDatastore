@@ -17,10 +17,12 @@
 #import <Foundation/Foundation.h>
 
 #import "CDTSecurityBase64Utils.h"
+#import "CDTSecurityAESUtils.h"
 
 @interface CDTSecurityUtils : NSObject
 
-- (instancetype)initWithBase64Utils:(id<CDTSecurityBase64Utils>)base64Utils;
+- (instancetype)initWithBase64Utils:(id<CDTSecurityBase64Utils>)base64Utils
+                           aesUtils:(id<CDTSecurityAESUtils>)aesUtils;
 
 /**
  * Generates a random string locally.
@@ -76,6 +78,7 @@
                         andIterations:(NSInteger)iterations;
 
 + (instancetype)util;
-+ (instancetype)utilWithBase64Utils:(id<CDTSecurityBase64Utils>)base64Utils;
++ (instancetype)utilWithBase64Utils:(id<CDTSecurityBase64Utils>)base64Utils
+                           aesUtils:(id<CDTSecurityAESUtils>)aesUtils;
 
 @end

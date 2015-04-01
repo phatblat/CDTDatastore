@@ -146,6 +146,9 @@
                location = "container:Classes/common/CDTEncryptionKey/CDTSecurity"
                name = "CDTSecurity">
                <FileRef
+                  location = "group:CDTSecurityAESUtils.h">
+               </FileRef>
+               <FileRef
                   location = "group:CDTSecurityAppleBase64Utils.h">
                </FileRef>
                <FileRef
@@ -159,6 +162,12 @@
                </FileRef>
                <FileRef
                   location = "group:CDTSecurityConstants.m">
+               </FileRef>
+               <FileRef
+                  location = "group:CDTSecurityCustomAESUtils.h">
+               </FileRef>
+               <FileRef
+                  location = "group:CDTSecurityCustomAESUtils.m">
                </FileRef>
                <FileRef
                   location = "group:CDTSecurityCustomBase64Utils.h">
