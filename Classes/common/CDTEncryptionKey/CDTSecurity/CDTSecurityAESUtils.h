@@ -18,7 +18,7 @@
 
 @protocol CDTSecurityAESUtils <NSObject>
 
-- (NSData *)doEncrypt:(NSString *)text key:(NSString *)key withIV:(NSString *)iv;
-- (NSData *)doDecrypt:(NSString *)ciphertextEncoded key:(NSString *)key withIV:(NSString *)iv;
+- (NSData *)doEncrypt:(NSData *)text key:(NSString *)key withIV:(NSString *)iv;
+- (NSData *)doDecrypt:(NSData *)text key:(NSString *)key withIV:(NSString *)iv;
 
 @end

@@ -41,9 +41,6 @@ NSString *const CDTDATASTORE_SECURITY_ERROR_MSG_EMPTY_PASSWORD = @"Password cann
 NSString *const CDTDATASTORE_SECURITY_ERROR_MSG_EMPTY_SALT = @"Salt cannot be nil/empty";
 NSString *const CDTDATASTORE_SECURITY_ERROR_MSG_EMPTY_CIPHER = @"Cannot decrypt empty/nil cipher";
 
-NSString *const CDTDATASTORE_SECURITY_ERROR_MSG_INVALID_IV_LENGTH =
-    @"IV must be 32 hex characters or 16 bytes (128 bits)";
-
 NSString *const CDTDATASTORE_SECURITY_KEY_DPK = @"dpk";
 NSString *const CDTDATASTORE_SECURITY_KEY_SALT = @"jsonSalt";
 NSString *const CDTDATASTORE_SECURITY_KEY_IV = @"iv";

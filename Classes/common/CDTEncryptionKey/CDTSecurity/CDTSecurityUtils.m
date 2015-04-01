@@ -99,7 +99,8 @@
         text = [self.base64Utils base64StringFromData:data length:(int)text.length isSafeUrl:NO];
     }
 
-    NSData *cipherDat = [self.aesUtils doEncrypt:text key:key withIV:iv];
+    NSData *dat = [text dataUsingEncoding:NSUnicodeStringEncoding];
+    NSData *cipherDat = [self.aesUtils doEncrypt:dat key:key withIV:iv];
 
     NSString *encodedBase64CipherString =
         [self.base64Utils base64StringFromData:cipherDat length:(int)text.length isSafeUrl:NO];
@@ -201,7 +202,8 @@
                       withIV:(NSString *)iv
          checkBase64Encoding:(BOOL)checkBase64Encoding
 {
-    NSData *decodedCipher = [self.aesUtils doDecrypt:ciphertext key:key withIV:iv];
+    NSData *ciphertextEncoded = [self.base64Utils base64DataFromString:ciphertext];
+    NSData *decodedCipher = [self.aesUtils doDecrypt:ciphertextEncoded key:key withIV:iv];
 
     NSString *returnText =
         [[NSString alloc] initWithData:decodedCipher encoding:NSUnicodeStringEncoding];

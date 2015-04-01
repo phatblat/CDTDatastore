@@ -21,46 +21,26 @@
 
 #import "CDTSecurityConstants.h"
 
-@interface CDTSecurityCustomAESUtils ()
+#import "NSString+CharBufferFromHexString.h"
 
-@property (strong, nonatomic, readonly) id<CDTSecurityBase64Utils> base64Utils;
+@interface CDTSecurityCustomAESUtils ()
 
 @end
 
 @implementation CDTSecurityCustomAESUtils
 
-#pragma mark - Init object
-- (instancetype)init
-{
-    return [self initWithBase64Utils:nil];
-}
-
-- (instancetype)initWithBase64Utils:(id<CDTSecurityBase64Utils>)base64Utils
-{
-    NSAssert(base64Utils, @"Base64 util is mandatory");
-    
-    self = [super init];
-    if (self) {
-        _base64Utils = base64Utils;
-    }
-    
-    return self;
-}
-
 #pragma mark - CDTSecurityAESUtils methods
-- (NSData *)doEncrypt:(NSString *)text key:(NSString *)key withIV:(NSString *)iv
+- (NSData *)doEncrypt:(NSData *)text key:(NSString *)key withIV:(NSString *)iv
 {
-    NSData *myText = [text dataUsingEncoding:NSUnicodeStringEncoding];
+    unsigned char *nativeIv = [iv charBufferFromHexStringWithSize:CDTkChosenCipherIVSize];
+    unsigned char *nativeKey = [key charBufferFromHexStringWithSize:CDTkChosenCipherKeySize];
     
-    unsigned char *nativeIv = [CDTSecurityCustomAESUtils getNativeIVFromHexString:iv];
-    unsigned char *nativeKey = [CDTSecurityCustomAESUtils getNativeKeyFromHexString:key];
+    unsigned char *textBytes = (unsigned char *)[text bytes];
+    int textBytesLength = (int)[text length];
     
     EVP_CIPHER_CTX ctx;
     EVP_CIPHER_CTX_init(&ctx);
     EVP_EncryptInit_ex(&ctx, EVP_aes_256_cbc(), NULL, nativeKey, nativeIv);
-    
-    unsigned char *textBytes = (unsigned char *)[myText bytes];
-    int textBytesLength = (int)[myText length];
     
     unsigned char *encryptedBytes = aes_encrypt(&ctx, textBytes, &textBytesLength);
     NSData *encryptedData = [NSData dataWithBytes:encryptedBytes length:textBytesLength];
@@ -79,26 +59,24 @@
     return encryptedData;
 }
 
-- (NSData *)doDecrypt:(NSString *)ciphertextEncoded key:(NSString *)key withIV:(NSString *)iv
+- (NSData *)doDecrypt:(NSData *)text key:(NSString *)key withIV:(NSString *)iv
 {
-    NSData *cipherText = [self.base64Utils base64DataFromString:ciphertextEncoded];
+    unsigned char *nativeKey = [key charBufferFromHexStringWithSize:CDTkChosenCipherKeySize];
+    unsigned char *nativeIv = [iv charBufferFromHexStringWithSize:CDTkChosenCipherIVSize];
     
-    unsigned char *nativeKey = [CDTSecurityCustomAESUtils getNativeKeyFromHexString:key];
-    unsigned char *nativeIv = [CDTSecurityCustomAESUtils getNativeIVFromHexString:iv];
+    unsigned char *textBytes = (unsigned char *)[text bytes];
+    int textBytesLength = (int)[text length];
     
     EVP_CIPHER_CTX ctx;
     EVP_CIPHER_CTX_init(&ctx);
     EVP_DecryptInit_ex(&ctx, EVP_aes_256_cbc(), NULL, nativeKey, nativeIv);
     
-    unsigned char *cipherTextBytes = (unsigned char *)[cipherText bytes];
-    int cipherTextBytesLength = (int)[cipherText length];
-    
-    unsigned char *decryptedBytes = aes_decrypt(&ctx, cipherTextBytes, &cipherTextBytesLength);
-    NSData *decryptedData = [NSData dataWithBytes:decryptedBytes length:cipherTextBytesLength];
+    unsigned char *decryptedBytes = aes_decrypt(&ctx, textBytes, &textBytesLength);
+    NSData *decryptedData = [NSData dataWithBytes:decryptedBytes length:textBytesLength];
     
     EVP_CIPHER_CTX_cleanup(&ctx);
     
-    bzero(decryptedBytes, cipherTextBytesLength);
+    bzero(decryptedBytes, textBytesLength);
     free(decryptedBytes);
     
     bzero(nativeKey, CDTkChosenCipherKeySize);
@@ -111,70 +89,6 @@
 }
 
 #pragma mark - Private class methods
-/*
- * Caller MUST FREE the memory returned from this method
- */
-+ (unsigned char *)getNativeIVFromHexString:(NSString *)iv
-{
-    /*
-     Make sure the key length represents 32 byte (256 bit) values. The string represent the
-     hexadecimal
-     values that should be used, so the string "4962" represents byte values 0x49  0x62.
-     Note that the constant value is the actual byte size, and the strings are twice that size
-     since every two characters in the string corresponds to a single byte.
-     */
-    if ([iv length] != (NSUInteger)(CDTkChosenCipherIVSize * 2)) {
-        [NSException raise:CDTDATASTORE_SECURITY_ERROR_LABEL
-                    format:@"%@", CDTDATASTORE_SECURITY_ERROR_MSG_INVALID_IV_LENGTH];
-    }
-    
-    unsigned char *nativeIv = malloc(CDTkChosenCipherIVSize);
-    
-    int i;
-    for (i = 0; i < CDTkChosenCipherIVSize; i++) {
-        int hexStrIdx = i * 2;
-        NSString *hexChrStr = [iv substringWithRange:NSMakeRange(hexStrIdx, 2)];
-        NSScanner *scanner = [[NSScanner alloc] initWithString:hexChrStr];
-        uint currInt;
-        [scanner scanHexInt:&currInt];
-        nativeIv[i] = (char)currInt;
-    }
-    
-    return nativeIv;
-}
-
-/*
- * Caller MUST FREE the memory returned from this method
- */
-+ (unsigned char *)getNativeKeyFromHexString:(NSString *)key
-{
-    /*
-     Make sure the key length represents 32 byte (256 bit) values. The string represent the
-     hexadecimal
-     values that should be used, so the string "4962" represents byte values 0x49  0x62.
-     Note that the constant value is the actual byte size, and the strings are twice that size
-     since every two characters in the string corresponds to a single byte.
-     */
-    if ([key length] != (NSUInteger)(CDTkChosenCipherKeySize * 2)) {
-        [NSException raise:CDTDATASTORE_SECURITY_ERROR_LABEL
-                    format:@"Key must be 64 hex characters or 32 bytes (256 bits)"];
-    }
-    
-    unsigned char *nativeKey = malloc(CDTkChosenCipherKeySize);
-    
-    int i;
-    for (i = 0; i < CDTkChosenCipherKeySize; i++) {
-        int hexStrIdx = i * 2;
-        NSString *hexChrStr = [key substringWithRange:NSMakeRange(hexStrIdx, 2)];
-        NSScanner *scanner = [[NSScanner alloc] initWithString:hexChrStr];
-        uint currInt;
-        [scanner scanHexInt:&currInt];
-        nativeKey[i] = (char)currInt;
-    }
-    
-    return nativeKey;
-}
-
 /*
  * Caller MUST FREE memory returned from this method
  * Decryption using OpenSSL decryption aes256

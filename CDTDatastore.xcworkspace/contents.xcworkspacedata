@@ -199,6 +199,12 @@
                <FileRef
                   location = "group:NSString+CDTSecurityJSON.m">
                </FileRef>
+               <FileRef
+                  location = "group:NSString+CharBufferFromHexString.h">
+               </FileRef>
+               <FileRef
+                  location = "group:NSString+CharBufferFromHexString.m">
+               </FileRef>
             </Group>
             <FileRef
                location = "group:CDTDatastore+EncryptionKey.h">

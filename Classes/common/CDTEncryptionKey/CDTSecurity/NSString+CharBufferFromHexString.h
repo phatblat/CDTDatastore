@@ -1,5 +1,5 @@
 //
-//  CDTSecurityCustomAESUtils.h
+//  NSString+CharBufferFromHexString.h
 //  
 //
 //  Created by Enrique de la Torre Fernandez on 01/04/2015.
@@ -16,8 +16,11 @@
 
 #import <Foundation/Foundation.h>
 
-#import "CDTSecurityAESUtils.h"
+@interface NSString (CharBufferFromHexString)
 
-@interface CDTSecurityCustomAESUtils : NSObject <CDTSecurityAESUtils>
+/*
+ * Caller MUST FREE the memory returned from this method
+ */
+- (unsigned char *)charBufferFromHexStringWithSize:(int)size;
 
 @end
