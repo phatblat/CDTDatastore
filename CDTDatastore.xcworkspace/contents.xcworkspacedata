@@ -149,6 +149,12 @@
                   location = "group:CDTSecurityAESUtils.h">
                </FileRef>
                <FileRef
+                  location = "group:CDTSecurityAppleAESUtils.h">
+               </FileRef>
+               <FileRef
+                  location = "group:CDTSecurityAppleAESUtils.m">
+               </FileRef>
+               <FileRef
                   location = "group:CDTSecurityAppleBase64Utils.h">
                </FileRef>
                <FileRef
