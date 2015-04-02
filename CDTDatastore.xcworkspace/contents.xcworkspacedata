@@ -194,6 +194,12 @@
                   location = "group:CDTSecurityData+KeychainStorage.m">
                </FileRef>
                <FileRef
+                  location = "group:CDTSecurityKeychainStorage.h">
+               </FileRef>
+               <FileRef
+                  location = "group:CDTSecurityKeychainStorage.m">
+               </FileRef>
+               <FileRef
                   location = "group:CDTSecurityManager.h">
                </FileRef>
                <FileRef
