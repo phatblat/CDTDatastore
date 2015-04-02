@@ -17,6 +17,7 @@
 #import "CDTSecurityManager.h"
 
 #import "CDTSecurityUtils.h"
+#import "CDTSecurityData+KeychainStorage.h"
 #import "CDTSecurityConstants.h"
 #import "NSObject+CDTSecurityJSON.h"
 #import "NSString+CDTSecurityJSON.h"
@@ -32,19 +33,16 @@
 #pragma mark - Public methods
 - (NSString *)getDPK:(NSString *)password
 {
-    NSDictionary *storedDict = [self getDpKDocFromKeyChain];
+    CDTSecurityData *data = [self getSecurityDataFromKeyChain];
 
-    if (storedDict == nil) {
+    if (data == nil) {
         return nil;
     }
 
-    NSString *dpk = [storedDict objectForKey:CDTDATASTORE_SECURITY_KEY_DPK];
-    NSString *salt = [storedDict objectForKey:CDTDATASTORE_SECURITY_KEY_SALT];
-    NSString *pwKey = [self passwordToKey:password withSalt:salt];
-    NSString *iv = [storedDict objectForKey:CDTDATASTORE_SECURITY_KEY_IV];
+    NSString *pwKey = [self passwordToKey:password withSalt:data.salt];
     NSString *decryptedKey = [[CDTSecurityUtils util] decryptWithKey:pwKey
-                                                      withCipherText:dpk
-                                                              withIV:iv
+                                                      withCipherText:data.encryptedDPK
+                                                              withIV:data.IV
                                                  checkBase64Encoding:YES];
 
     return decryptedKey;
@@ -104,15 +102,14 @@
     NSString *encyptedDPK =
         [[CDTSecurityUtils util] encryptWithKey:pwKey withText:dpk withIV:hexEncodedIv];
 
-    NSDictionary *jsonEntriesDict = @{
-        CDTDATASTORE_SECURITY_KEY_IV : hexEncodedIv,
-        CDTDATASTORE_SECURITY_KEY_SALT : salt,
-        CDTDATASTORE_SECURITY_KEY_DPK : encyptedDPK,
-        CDTDATASTORE_SECURITY_KEY_ITERATIONS :
-            [NSNumber numberWithInt:CDTDATASTORE_SECURITY_DEFAULT_PBKDF2_ITERATIONS],
-        CDTDATASTORE_SECURITY_KEY_VERSION : CDTDATASTORE_SECURITY_KEY_VERSION_NUMBER
-    };
-
+    CDTSecurityData *data = [[CDTSecurityData alloc] init];
+    data.IV = hexEncodedIv;
+    data.salt = salt;
+    data.encryptedDPK = encyptedDPK;
+    data.iterations =[NSNumber numberWithInt:CDTDATASTORE_SECURITY_DEFAULT_PBKDF2_ITERATIONS];
+    data.version = CDTDATASTORE_SECURITY_KEY_VERSION_NUMBER;
+    
+    NSDictionary *jsonEntriesDict = [data dictionary];
     NSString *jsonStr = [jsonEntriesDict CDTSecurityJSONRepresentation];
     NSMutableDictionary *jsonDocStoreDict =
         [self getGenericPwStoreDict:CDTDATASTORE_SECURITY_KEY_DOCUMENT_ID data:jsonStr];
@@ -132,7 +129,7 @@
     return worked;
 }
 
-- (NSDictionary *)getDpKDocFromKeyChain
+- (CDTSecurityData *)getSecurityDataFromKeyChain
 {
     NSMutableDictionary *lookupDict = [self getDpkDocumentLookupDict];
 
@@ -148,9 +145,11 @@
         id jsonDoc = [jsonStr CDTSecurityJSONValue];
 
         if (jsonDoc != nil && [jsonDoc isKindOfClass:[NSDictionary class]]) {
+            CDTSecurityData *data =
+                [CDTSecurityData securityDataWithDictionary:(NSDictionary *)jsonDoc];
+
             // Ensure the num derivations saved, matches what we have
-            int iters = [[(NSDictionary *)jsonDoc
-                objectForKey:CDTDATASTORE_SECURITY_KEY_ITERATIONS] intValue];
+            int iters = [data.iterations intValue];
 
             if (iters != CDTDATASTORE_SECURITY_DEFAULT_PBKDF2_ITERATIONS) {
                 CDTLogWarn(CDTDATASTORE_LOG_CONTEXT,
@@ -159,7 +158,7 @@
                 return nil;
             }
 
-            return jsonDoc;
+            return data;
         }
     } else {
         CDTLogWarn(CDTDATASTORE_LOG_CONTEXT,

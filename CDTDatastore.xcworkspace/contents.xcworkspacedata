@@ -182,6 +182,18 @@
                   location = "group:CDTSecurityCustomBase64Utils.m">
                </FileRef>
                <FileRef
+                  location = "group:CDTSecurityData.h">
+               </FileRef>
+               <FileRef
+                  location = "group:CDTSecurityData.m">
+               </FileRef>
+               <FileRef
+                  location = "group:CDTSecurityData+KeychainStorage.h">
+               </FileRef>
+               <FileRef
+                  location = "group:CDTSecurityData+KeychainStorage.m">
+               </FileRef>
+               <FileRef
                   location = "group:CDTSecurityManager.h">
                </FileRef>
                <FileRef
