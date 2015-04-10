@@ -20,6 +20,8 @@
 #import "CDTSecurityCustomAESUtils.h"
 #import "CDTSecurityAppleAESUtils.h"
 
+#import "CDTSecurityCustomBase64Utils.h"
+
 #import "CDTSecurityUtils.h"
 #import "CDTSecurityConstants.h"
 
@@ -129,6 +131,50 @@
         [self.appleUtils doDecrypt:self.dataToDecrypt key:self.defaultKey withIV:self.defaultIV];
 
     XCTAssertEqualObjects(data, self.dataToEncrypt, @"Both objects should be equal");
+}
+
+- (void)testDoEncrypt
+{
+    CDTSecurityCustomBase64Utils *base64 = [[CDTSecurityCustomBase64Utils alloc] init];
+    
+    NSString *key = @"3271b0b2ae09cf10128893abba0871b64ea933253378d0c65bcbe05befe636c3";
+    NSString *IV = @"10327cc29f13539f8ce5378318f46137";
+    NSLog(@"\n\nKey: <%@>, IV: <%@>", key, IV);
+
+    NSString *txt = @"1234567890";
+    NSData *data = [self.customUtils doEncrypt:[txt dataUsingEncoding:NSUnicodeStringEncoding]
+                                           key:key
+                                        withIV:IV];
+    NSString *result = [base64 base64StringFromData:data length:0 isSafeUrl:NO];
+    NSLog(@"\n\n<%@> -> <%@>\n\n", txt, result);
+    
+    txt = @"a1s2d3f4g5";
+    data = [self.customUtils doEncrypt:[txt dataUsingEncoding:NSUnicodeStringEncoding]
+                                           key:key
+                                        withIV:IV];
+    result = [base64 base64StringFromData:data length:0 isSafeUrl:NO];
+    NSLog(@"\n\n<%@> -> <%@>\n\n", txt, result);
+    
+    txt = @"摇噺摃䈰婘栰";
+    data = [self.customUtils doEncrypt:[txt dataUsingEncoding:NSUnicodeStringEncoding]
+                                   key:key
+                                withIV:IV];
+    result = [base64 base64StringFromData:data length:0 isSafeUrl:NO];
+    NSLog(@"\n\n<%@> -> <%@>\n\n", txt, result);
+    
+    txt = @"摇;摃:§婘栰";
+    data = [self.customUtils doEncrypt:[txt dataUsingEncoding:NSUnicodeStringEncoding]
+                                   key:key
+                                withIV:IV];
+    result = [base64 base64StringFromData:data length:0 isSafeUrl:NO];
+    NSLog(@"\n\n<%@> -> <%@>\n\n", txt, result);
+    
+    txt = @"摇;摃:xx👹⌚️👽";
+    data = [self.customUtils doEncrypt:[txt dataUsingEncoding:NSUnicodeStringEncoding]
+                                   key:key
+                                withIV:IV];
+    result = [base64 base64StringFromData:data length:0 isSafeUrl:NO];
+    NSLog(@"\n\n<%@> -> <%@>\n\n", txt, result);
 }
 
 @end
