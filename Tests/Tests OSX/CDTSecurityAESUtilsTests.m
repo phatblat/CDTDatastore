@@ -177,4 +177,31 @@
     NSLog(@"\n\n<%@> -> <%@>\n\n", txt, result);
 }
 
+- (void)testGenerateKey
+{
+    CDTSecurityUtils *util = [CDTSecurityUtils util];
+    NSString *salt = @"82bccddd8c04801730d9b5e64669084528a41b258307ef8af7e888da068f5d81";
+    NSInteger iterations = 10000;
+    
+    NSString *password = @"1234567890";
+    NSString *key = [util generateKeyWithPassword:password andSalt:salt andIterations:iterations];
+    NSLog(@"\n\nPass: <%@> Salt: <%@> Iter: %li -> <%@>\n\n", password, salt, (long)iterations, key);
+    
+    password = @"a1s2d3f4g5";
+    key = [util generateKeyWithPassword:password andSalt:salt andIterations:iterations];
+    NSLog(@"\n\nPass: <%@> Salt: <%@> Iter: %li -> <%@>\n\n", password, salt, (long)iterations, key);
+    
+    password = @"摇噺摃䈰婘栰";
+    key = [util generateKeyWithPassword:password andSalt:salt andIterations:iterations];
+    NSLog(@"\n\nPass: <%@> Salt: <%@> Iter: %li -> <%@>\n\n", password, salt, (long)iterations, key);
+    
+    password = @"摇;摃:§婘栰";
+    key = [util generateKeyWithPassword:password andSalt:salt andIterations:iterations];
+    NSLog(@"\n\nPass: <%@> Salt: <%@> Iter: %li -> <%@>\n\n", password, salt, (long)iterations, key);
+    
+    password = @"摇;摃:xx👹⌚️👽";
+    key = [util generateKeyWithPassword:password andSalt:salt andIterations:iterations];
+    NSLog(@"\n\nPass: <%@> Salt: <%@> Iter: %li -> <%@>\n\n", password, salt, (long)iterations, key);
+}
+
 @end

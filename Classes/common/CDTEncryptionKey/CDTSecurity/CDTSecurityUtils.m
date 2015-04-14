@@ -161,7 +161,7 @@
 
 #warning passwordLen is the length of the text password in BYTES
 #warning pass.length is not the length in bytes, it is the number of characters
-    int retVal = CCKeyDerivationPBKDF(kCCPBKDF2, passData.bytes, pass.length, saltData.bytes,
+    int retVal = CCKeyDerivationPBKDF(kCCPBKDF2, passData.bytes, passData.length, saltData.bytes,
                                       salt.length, kCCPRFHmacAlgSHA1, (int)iterations,
                                       derivedKey.mutableBytes, kCCKeySizeAES256);
 
