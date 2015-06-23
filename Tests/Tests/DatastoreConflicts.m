@@ -886,6 +886,34 @@
     
 }
 
+- (void)testGetAllDocumentsDoesNotReturnOneConflictedDocumentTwice
+{
+    [self addConflictingDocumentWithId:@"doc0" toDatastore:self.datastore];
 
+    NSArray *allDocs = [self.datastore getAllDocuments];
+
+    XCTAssertEqual(allDocs.count, 1, @"Return only 1 document, even if there are conflicts");
+}
+
+- (void)testGetAllDocumentsDoesNotReturnTwoConflictedDocumentTwice
+{
+    [self addConflictingDocumentWithId:@"doc0" toDatastore:self.datastore];
+    [self addConflictingDocumentWithId:@"doc1" toDatastore:self.datastore];
+
+    NSArray *allDocs = [self.datastore getAllDocuments];
+
+    XCTAssertEqual(allDocs.count, 2, @"Return only 2 documents, even if there are conflicts");
+}
+
+- (void)testGetAllDocumentsDoesNotReturnThreeConflictedDocumentTwice
+{
+    [self addConflictingDocumentWithId:@"doc0" toDatastore:self.datastore];
+    [self addConflictingDocumentWithId:@"doc1" toDatastore:self.datastore];
+    [self addConflictingDocumentWithId:@"doc3" toDatastore:self.datastore];
+
+    NSArray *allDocs = [self.datastore getAllDocuments];
+
+    XCTAssertEqual(allDocs.count, 3, @"Return only 3 documents, even if there are conflicts");
+}
 
 @end

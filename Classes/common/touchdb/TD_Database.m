@@ -1334,123 +1334,177 @@ const TDChangesOptions kDefaultTDChangesOptions = {UINT_MAX, 0, NO, NO, YES};
 // FIX: This has a lot of code in common with -[TD_View queryWithOptions:status:]. Unify the two!
 - (NSDictionary*)getDocsWithIDs:(NSArray*)docIDs options:(const TDQueryOptions*)options
 {
-    if (!options) options = &kDefaultTDQueryOptions;
-
-    // Generate the SELECT statement, based on the options:
-    NSMutableString* sql = [@"SELECT revs.doc_id, docid, revid" mutableCopy];
-    if (options->includeDocs) [sql appendString:@", json, sequence"];
-    if (options->includeDeletedDocs) [sql appendString:@", deleted"];
-    [sql appendString:@" FROM revs, docs WHERE"];
-    if (docIDs) [sql appendFormat:@" docid IN (%@) AND", [TD_Database joinQuotedStrings:docIDs]];
-    [sql appendString:@" docs.doc_id = revs.doc_id AND current=1"];
-    if (!options->includeDeletedDocs) [sql appendString:@" AND deleted=0"];
-
-    NSMutableArray* args = $marray();
-    id minKey = options->startKey, maxKey = options->endKey;
-    BOOL inclusiveMin = YES, inclusiveMax = options->inclusiveEnd;
-    if (options->descending) {
-        minKey = maxKey;
-        maxKey = options->startKey;
-        inclusiveMin = inclusiveMax;
-        inclusiveMax = YES;
+    if (!options) {
+        options = &kDefaultTDQueryOptions;
     }
-    if (minKey) {
-        Assert([minKey isKindOfClass:[NSString class]]);
-        [sql appendString:(inclusiveMin ? @" AND docid >= ?" : @" AND docid > ?")];
-        [args addObject:minKey];
-    }
-    if (maxKey) {
-        Assert([maxKey isKindOfClass:[NSString class]]);
-        [sql appendString:(inclusiveMax ? @" AND docid <= ?" : @" AND docid < ?")];
-        [args addObject:maxKey];
-    }
-
-    [sql appendFormat:@" ORDER BY docid %@, %@ revid DESC LIMIT ? OFFSET ?",
-                      (options->descending ? @"DESC" : @"ASC"),
-                      (options->includeDeletedDocs ? @"deleted ASC," : @"")];
-    [args addObject:@(options->limit)];
-    [args addObject:@(options->skip)];
 
     __block SequenceNumber update_seq = 0;
     __block NSMutableArray* rows = $marray();
 
     [_fmdbQueue inTransaction:^(FMDatabase* db, BOOL* rollback) {
-        if (options->updateSeq)
-            update_seq = self.lastSequence;  // TODO: needs to be atomic with the following SELECT
 
-        // Now run the database query:
-        FMResultSet* r = [db executeQuery:sql withArgumentsInArray:args];
-        if (!r) return;
+      // Get the doc IDs
+      // FROM
+      NSMutableString* sql = [NSMutableString stringWithString:@"SELECT docid FROM docs "];
+      NSMutableArray* args = $marray();
 
-        int64_t lastDocID = 0;
-        NSMutableDictionary* docs = docIDs ? $mdict() : nil;
-        while ([r next]) {
-            @autoreleasepool
-            {
-                // Only count the first rev for a given doc (the rest will be losing conflicts):
-                int64_t docNumericID = [r longLongIntForColumnIndex:0];
-                if (docNumericID == lastDocID) continue;
-                lastDocID = docNumericID;
+      // WHERE
+      NSMutableString* whereClause = [NSMutableString string];
+      if (docIDs) {
+          [whereClause appendFormat:@"docid IN (%@) ", [TD_Database joinQuotedStrings:docIDs]];
+      }
 
-                NSString* docID = [r stringForColumnIndex:1];
-                NSString* revID = [r stringForColumnIndex:2];
-                BOOL deleted = options->includeDeletedDocs && [r boolForColumn:@"deleted"];
-                NSDictionary* docContents = nil;
-                if (options->includeDocs) {
-                    // Fill in the document contents:
-                    NSData* json = [r dataNoCopyForColumnIndex:3];
-                    SequenceNumber sequence = [r longLongIntForColumnIndex:4];
-                    docContents = [self documentPropertiesFromJSON:json
-                                                             docID:docID
-                                                             revID:revID
-                                                           deleted:deleted
-                                                          sequence:sequence
-                                                           options:options->content
-                                                        inDatabase:db];
-                    Assert(docContents);
-                }
-                NSDictionary* change = $dict(
-                    { @"id", docID }, { @"key", docID },
-                    { @"value", $dict({ @"rev", revID }, { @"deleted", (deleted ? $true : nil) }) },
-                    { @"doc", docContents });
-                if (docIDs)
-                    [docs setObject:change forKey:docID];
-                else
-                    [rows addObject:change];
-            }
-        }
-        [r close];
+      id minKey = options->startKey;
+      id maxKey = options->endKey;
+      BOOL inclusiveMin = YES;
+      BOOL inclusiveMax = options->inclusiveEnd;
+      if (options->descending) {
+          minKey = maxKey;
+          maxKey = options->startKey;
+          inclusiveMin = inclusiveMax;
+          inclusiveMax = YES;
+      }
+      if (minKey) {
+          Assert([minKey isKindOfClass:[NSString class]]);
 
-        // If given doc IDs, sort the output into that order, and add entries for missing docs:
-        if (docIDs) {
-            for (NSString* docID in docIDs) {
-                NSDictionary* change = docs[docID];
-                if (!change) {
-                    NSString* revID = nil;
-                    SInt64 docNumericID = [self getDocNumericID:docID database:db];
-                    if (docNumericID > 0) {
-                        BOOL deleted;
-                        revID = [self winningRevIDOfDocNumericID:docNumericID
-                                                       isDeleted:&deleted
-                                                        database:db];
-                    }
-                    if (revID) {
-                        change =
-                            $dict({ @"id", docID }, { @"key", docID },
-                                  { @"value", $dict({ @"rev", revID }, { @"deleted", $true }) });
-                    } else {
-                        change = $dict({ @"key", docID }, { @"error", @"not_found" });
-                    }
-                }
-                [rows addObject:change];
-            }
-        }
+          if (whereClause.length > 0) {
+              [sql appendString:@"AND "];
+          }
+          [sql appendString:(inclusiveMin ? @"docid >= ? " : @"docid > ? ")];
+
+          [args addObject:minKey];
+      }
+      if (maxKey) {
+          Assert([maxKey isKindOfClass:[NSString class]]);
+
+          if (whereClause.length > 0) {
+              [sql appendString:@"AND "];
+          }
+          [sql appendString:(inclusiveMax ? @"docid <= ? " : @"docid < ? ")];
+
+          [args addObject:maxKey];
+      }
+
+      if (whereClause.length > 0) {
+          [sql appendFormat:@"WHERE %@", whereClause];
+      }
+
+      // OFFSET & LIMIT
+      [sql appendFormat:@"ORDER BY docid %@ LIMIT ? OFFSET ?",
+                        (options->descending ? @"DESC" : @"ASC")];
+
+      [args addObject:@(options->limit)];
+      [args addObject:@(options->skip)];
+
+      // Execute request
+      NSMutableArray* finalDocIDs = [NSMutableArray array];
+
+      FMResultSet* r = [db executeQuery:sql withArgumentsInArray:args];
+      if (r) {
+          while ([r next]) {
+              @autoreleasepool { [finalDocIDs addObject:[r stringForColumnIndex:0]]; }
+          }
+          [r close];
+      }
+
+      // Generate the SELECT statement, based on the options:
+      sql = [NSMutableString stringWithString:@"SELECT revs.doc_id, docid, revid"];
+      if (options->includeDocs) {
+          [sql appendString:@", json, sequence"];
+      }
+      if (options->includeDeletedDocs) {
+          [sql appendString:@", deleted"];
+      }
+      [sql appendString:@" FROM revs, docs WHERE"];
+      [sql appendFormat:@" docid IN (%@) AND", [TD_Database joinQuotedStrings:finalDocIDs]];
+      [sql appendString:@" docs.doc_id = revs.doc_id AND current=1"];
+      if (!options->includeDeletedDocs) {
+          [sql appendString:@" AND deleted=0"];
+      }
+      [sql appendFormat:@" ORDER BY docid %@, %@ revid DESC",
+                        (options->descending ? @"DESC" : @"ASC"),
+                        (options->includeDeletedDocs ? @"deleted ASC," : @"")];
+
+      // Now run the database query:
+      if (options->updateSeq) {
+          update_seq = self.lastSequence;  // TODO: needs to be atomic with the following SELECT
+      }
+
+      r = [db executeQuery:sql withArgumentsInArray:args];
+      if (!r) {
+          return;
+      }
+
+      int64_t lastDocID = 0;
+      NSMutableDictionary* docs = docIDs ? $mdict() : nil;
+      while ([r next]) {
+          @autoreleasepool
+          {
+              // Only count the first rev for a given doc (the rest will be losing conflicts):
+              int64_t docNumericID = [r longLongIntForColumnIndex:0];
+              if (docNumericID == lastDocID) {
+                  continue;
+              }
+              lastDocID = docNumericID;
+
+              NSString* docID = [r stringForColumnIndex:1];
+              NSString* revID = [r stringForColumnIndex:2];
+              BOOL deleted = options->includeDeletedDocs && [r boolForColumn:@"deleted"];
+              NSDictionary* docContents = nil;
+              if (options->includeDocs) {
+                  // Fill in the document contents:
+                  NSData* json = [r dataNoCopyForColumnIndex:3];
+                  SequenceNumber sequence = [r longLongIntForColumnIndex:4];
+                  docContents = [self documentPropertiesFromJSON:json
+                                                           docID:docID
+                                                           revID:revID
+                                                         deleted:deleted
+                                                        sequence:sequence
+                                                         options:options->content
+                                                      inDatabase:db];
+                  Assert(docContents);
+              }
+              NSDictionary* change = $dict({ @"id", docID }, { @"key", docID }, {
+                  @"value", $dict({ @"rev", revID }, { @"deleted", (deleted ? $true : nil) })
+              }, { @"doc", docContents });
+              if (docIDs) {
+                  [docs setObject:change forKey:docID];
+              } else {
+                  [rows addObject:change];
+              }
+          }
+      }
+      [r close];
+
+      // If given doc IDs, sort the output into that order, and add entries for missing docs:
+      if (docIDs) {
+          for (NSString* docID in docIDs) {
+              NSDictionary* change = docs[docID];
+              if (!change) {
+                  NSString* revID = nil;
+                  SInt64 docNumericID = [self getDocNumericID:docID database:db];
+                  if (docNumericID > 0) {
+                      BOOL deleted;
+                      revID = [self winningRevIDOfDocNumericID:docNumericID
+                                                     isDeleted:&deleted
+                                                      database:db];
+                  }
+                  if (revID) {
+                      change = $dict({ @"id", docID }, { @"key", docID },
+                                     { @"value", $dict({ @"rev", revID }, { @"deleted", $true }) });
+                  } else {
+                      change = $dict({ @"key", docID }, { @"error", @"not_found" });
+                  }
+              }
+              [rows addObject:change];
+          }
+      }
     }];
 
     NSUInteger totalRows = rows.count;  //??? Is this true, or does it ignore limit/offset?
-    return $dict({ @"rows", rows }, { @"total_rows", @(totalRows) },
-                 { @"offset", @(options->skip) },
-                 { @"update_seq", update_seq ? @(update_seq) : nil });
+    return $dict({ @"rows", rows }, { @"total_rows", @(totalRows) }, {
+        @"offset", @(options->skip)
+    }, { @"update_seq", update_seq ? @(update_seq) : nil });
 }
 
 - (NSDictionary*)getAllDocs:(const TDQueryOptions*)options
