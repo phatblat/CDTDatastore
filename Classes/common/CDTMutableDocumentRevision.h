@@ -10,13 +10,14 @@
 
 @interface CDTMutableDocumentRevision : CDTDocumentRevision
 
-@property (nonatomic, strong, readwrite) NSString *sourceRevId;
-@property (nonatomic, strong, readwrite) NSString *docId;
+@property (nonatomic, strong, readwrite, nullable) NSString *sourceRevId;
+@property (nonatomic, strong, readwrite, nonnull) NSString *docId;
+@property (nonatomic,strong, readwrite, nullable) NSString *revId;
 
 /**
  *   Creates an empty CDTMutableDocumentRevision
  **/
-+ (CDTMutableDocumentRevision *)revision;
++ ( nullable CDTMutableDocumentRevision *)revision;
 
 /**
  * Initializes a CDTMutableDocumentRevision revision
@@ -25,14 +26,14 @@
  * @param body The body of the document
  *
  **/
-- (instancetype)initWithDocumentId:(NSString *)documentId body:(NSMutableDictionary *)body;
+- (nullable instancetype)initWithDocumentId:(nonnull NSString *)documentId body:(nonnull NSMutableDictionary *)body;
 
 /**
  * Initializes a CDTMutableDocumentRevision
  * 
  * @param sourceRevId the parent revision id
  **/
-- (instancetype)initWithSourceRevisionId:(NSString *)sourceRevId;
+- (nullable instancetype)initWithSourceRevisionId:(nonnull NSString *)sourceRevId;
 
 /**
  Initializes a CDTMutableDocumentRevision
@@ -42,17 +43,17 @@
  @param attachments the document's attachments
  @param sourceRevId the parent revision id
  **/
-- (instancetype)initWithDocumentId:(NSString*) documentId
-                              body:(NSMutableDictionary *)body
-                       attachments: (NSMutableDictionary *)attachments
-                  sourceRevisionId:(NSString*)sourceRevId;
+- (nullable instancetype)initWithDocumentId:(nullable NSString*) documentId
+                                       body:(nullable NSMutableDictionary *)body
+                                attachments: (nullable NSMutableDictionary *)attachments
+                           sourceRevisionId:(nullable NSString*)sourceRevId NS_DESIGNATED_INITIALIZER;
 
-- (void)setBody:(NSDictionary *)body;
+- (void)setBody:(nonnull NSDictionary *)body;
 
-- (NSMutableDictionary *)body;
+- (nonnull NSMutableDictionary *)body;
 
-- (NSMutableDictionary *)attachments;
+- (nonnull NSMutableDictionary *)attachments;
 
-- (void)setAttachments:(NSDictionary *)attachments;
+- (void)setAttachments:(nonnull NSDictionary *)attachments;
 
 @end
