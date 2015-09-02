@@ -40,11 +40,12 @@
                       sequence:sequence];
     if (self != nil) {
         _datastore = datastore;
+        _isFullRevision = NO;
     }
     return self;
 }
 
-- (CDTDocumentRevision *)mutableCopy
+- (CDTDocumentRevision *)copy
 {
     CDTDocumentRevision *rev = [self.datastore getDocumentWithId:self.docId error:nil];
     if (rev == nil) {

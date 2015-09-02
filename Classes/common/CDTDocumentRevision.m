@@ -177,6 +177,8 @@
         _changed = NO;
         ((CDTChangedDictionary *)_body).delegate = self;
         ((CDTChangedDictionary *)_attachments).delegate = self;
+
+        _isFullRevision = YES;
     }
     return self;
 }

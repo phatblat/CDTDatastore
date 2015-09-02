@@ -19,12 +19,14 @@
 #import "CDTChangedObserver.h"
 
 @class TD_RevisionList;
-@class CDTDocumentRevision;
 
 /**
  * Represents a single revision of a document in a datastore.
  */
-@interface CDTDocumentRevision : NSObject <CDTChangedObserver>
+@interface CDTDocumentRevision : NSObject <CDTChangedObserver> {
+   @protected
+    bool _isFullRevision;
+}
 
 /** Document ID for this document revision. */
 @property (nonatomic, strong, readonly) NSString *docId;
@@ -40,6 +42,15 @@
 @property (nonatomic, strong) NSMutableDictionary *attachments;
 
 @property (nonatomic, getter=isChanged) bool changed;
+
+/**
+ Indicates if this document revision contains all fields and attachments. If NO, datastore
+ will refuse to save.
+
+ This allows for document projections to conform to the CDTDocumentRevision API without
+ risking their being saved to the datastore.
+ */
+@property (nonatomic, readonly) bool isFullRevision;
 
 - (id)initWithDocId:(NSString *)docId
          revisionId:(NSString *)revId
