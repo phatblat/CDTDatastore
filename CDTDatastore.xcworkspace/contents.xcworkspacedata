@@ -186,9 +186,6 @@
                location = "group:Classes/common/query/CDTQIndexUpdater.m">
             </FileRef>
             <FileRef
-               location = "group:Classes/common/query/CDTQLogging.h">
-            </FileRef>
-            <FileRef
                location = "group:Classes/common/query/CDTQProjectedDocumentRevision.h">
             </FileRef>
             <FileRef

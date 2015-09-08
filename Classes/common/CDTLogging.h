@@ -79,15 +79,10 @@ extern DDLogLevel CDTLoggingLevels[];
               __PRETTY_FUNCTION__, frmt, ##__VA_ARGS__)
 #define CDTChangeLogLevel(context, logLevel) CDTLoggingLevels[context - CDTSTART_CONTEXT] = logLevel
 
-// These macros were previously in the CDTQLogging.h header file, they now map onto
-// CDTLog* macros.
-#define CDTQ_LOGGING_CONTEXT CDTQ_LOG_CONTEXT
+// These macros were previously in the CDTQLogging.h header file, they are here
+// to maintain compatbility with users changing the log level or check the log context
 
-#define LogError(frmt, ...) CDTLogError(CDTQ_LOG_CONTEXT, frmt, ##__VA_ARGS__)
-#define LogWarn(frmt, ...) CDTLogWarn(CDTQ_LOG_CONTEXT, frmt, ##__VA_ARGS__)
-#define LogInfo(frmt, ...) CDTLogInfo(CDTQ_LOG_CONTEXT, frmt, ##__VA_ARGS__)
-#define LogDebug(frmt, ...) CDTLogDebug(CDTQ_LOG_CONTEXT, frmt, ##__VA_ARGS__)
-#define LogVerbose(frmt, ...) CDTLogVerbose(CDTQ_LOG_CONTEXT, frmt, ##__VA_ARGS__)
+#define CDTQ_LOGGING_CONTEXT CDTQ_LOG_CONTEXT
 
 #define CDTQChangeLogLevel(level) CDTChangeLogLevel(CDTQ_LOG_CONTEXT, level)
 

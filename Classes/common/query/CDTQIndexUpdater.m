@@ -18,7 +18,6 @@
 #import "CDTQResultSet.h"
 #import "CDTQValueExtractor.h"
 #import "CDTFetchChanges.h"
-#import "CDTQLogging.h"
 #import "CDTLogging.h"
 
 #import "CloudantSync.h"
@@ -109,7 +108,7 @@
             *error = [NSError errorWithDomain:CDTQIndexManagerErrorDomain
                                          code:CDTQIndexErrorSqlError
                                      userInfo:userInfo];
-            LogError(@"Problem updating index %@", indexName);
+            CDTLogError(CDTQ_LOG_CONTEXT, @"Problem updating index %@", indexName);
         }
     }
 
@@ -227,7 +226,8 @@
                 }
 
                 if (!success) {
-                    LogError(@"Updating index %@ failed, CDTSqlParts: %@", indexName, insert);
+                    CDTLogError(CDTQ_LOG_CONTEXT, @"Updating index %@ failed, CDTSqlParts: %@",
+                                indexName, insert);
                     break;
                 }
             }
@@ -325,7 +325,8 @@
     }
 
     if (n_arrays > 1) {
-        LogError(
+        CDTLogError(
+            CDTQ_LOG_CONTEXT,
             @"Indexing %@ in index %@ includes >1 array field; only array field per index allowed",
             rev.docId, indexName);
         return nil;
