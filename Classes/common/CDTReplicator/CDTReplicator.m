@@ -325,8 +325,8 @@ static NSString *const CDTReplicatorErrorDomain = @"CDTReplicatorErrorDomain";
         return nil;
     }
 
-    // Assign replicator the raw options
-    repl.options = properties;
+    repl.reset = NO;       // TODO we don't expose this right now
+    repl.heartbeat = nil;  // TODO we don't expose this right now
 
     // Headers are validated before being put in properties
     repl.requestHeaders = properties[@"headers"];
