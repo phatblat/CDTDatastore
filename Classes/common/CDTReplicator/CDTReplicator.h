@@ -18,7 +18,7 @@
 #import "CDTReplicatorDelegate.h"
 
 @class CDTDatastore;
-@class TDReplicatorManager;
+@class TD_DatabaseManager;
 @class CDTAbstractReplication;
 
 /**
@@ -144,9 +144,9 @@ typedef NS_ENUM(NSInteger, CDTReplicatorState) {
 /*
  Private so no docs
  */
--(id)initWithTDReplicatorManager:(TDReplicatorManager*)replicatorManager
-                     replication:(CDTAbstractReplication*)replication
-                           error:(NSError * __autoreleasing*)error;
+- (id)initWithTDDatabaseManager:(TD_DatabaseManager *)dbManager
+                    replication:(CDTAbstractReplication *)replication
+                          error:(NSError *__autoreleasing *)error;
 
 /*
  Access the underlying NSThread execution state.

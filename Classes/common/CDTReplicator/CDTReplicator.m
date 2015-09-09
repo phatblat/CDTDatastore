@@ -20,13 +20,14 @@
 #import "CDTPullReplication.h"
 #import "CDTPushReplication.h"
 #import "CDTLogging.h"
+#import "CDTDatastoreManager.h"
 
 #import "TD_Revision.h"
 #import "TD_Database.h"
 #import "TD_Body.h"
 #import "TDPusher.h"
 #import "TDPuller.h"
-#import "TDReplicatorManager.h"
+#import "TD_DatabaseManager.h"
 #import "TDStatus.h"
 
 const NSString *CDTReplicatorLog = @"CDTReplicator";
@@ -34,7 +35,7 @@ static NSString *const CDTReplicatorErrorDomain = @"CDTReplicatorErrorDomain";
 
 @interface CDTReplicator ()
 
-@property (nonatomic, strong) TDReplicatorManager *replicatorManager;
+@property (nonatomic, strong) TD_DatabaseManager *dbManager;
 @property (nonatomic, strong) TDReplicator *tdReplicator;
 @property (nonatomic, copy) CDTAbstractReplication *cdtReplication;
 @property (nonatomic, strong) NSDictionary *replConfig;
@@ -70,19 +71,45 @@ static NSString *const CDTReplicatorErrorDomain = @"CDTReplicatorErrorDomain";
     }
 }
 
++ (CDTReplicator *)replicatorWithConfiguration:(CDTAbstractReplication *)configuration
+                              datastoreManager:(CDTDatastoreManager *)datastoreManager
+                                         error:(NSError *__autoreleasing *)error
+{
+    NSError *localError;
+    CDTReplicator *replicator =
+        [[CDTReplicator alloc] initWithTDDatabaseManager:datastoreManager.manager
+                                             replication:configuration
+                                                   error:&localError];
+
+    if (replicator == nil) {
+        CDTLogWarn(CDTREPLICATION_LOG_CONTEXT,
+                   @"CDTReplicatorFactory -oneWay:error: Error. Unable to create CDTReplicator. "
+                   @"%@\n %@",
+                   [configuration class], configuration);
+
+        if (error) {
+            *error = localError;
+        }
+
+        return nil;
+    }
+
+    return replicator;
+}
+
 #pragma mark Initialise
 
-- (id)initWithTDReplicatorManager:(TDReplicatorManager *)replicatorManager
-                      replication:(CDTAbstractReplication *)replication
-                            error:(NSError *__autoreleasing *)error
+- (id)initWithTDDatabaseManager:(TD_DatabaseManager *)dbManager
+                    replication:(CDTAbstractReplication *)replication
+                          error:(NSError *__autoreleasing *)error
 {
-    if (replicatorManager == nil || replication == nil) {
+    if (dbManager == nil || replication == nil) {
         return nil;
     }
 
     self = [super init];
     if (self) {
-        _replicatorManager = replicatorManager;
+        _dbManager = dbManager;
         _cdtReplication = [replication copy];
 
         NSError *localError;
@@ -187,8 +214,7 @@ static NSString *const CDTReplicatorErrorDomain = @"CDTReplicatorErrorDomain";
         // doing this inside @synchronized lets us be certain that self.tdReplicator is either
         // created or nil throughout the rest of the code (especially in -stop)
         NSError *localError;
-        self.tdReplicator = [self.replicatorManager createReplicatorWithProperties:self.replConfig
-                                                                             error:&localError];
+        self.tdReplicator = [self createReplicatorWithProperties:self.replConfig error:&localError];
 
         if (!self.tdReplicator) {
             self.state = CDTReplicatorStateError;
@@ -253,6 +279,25 @@ static NSString *const CDTReplicatorErrorDomain = @"CDTReplicatorErrorDomain";
           [self.tdReplicator class], self.tdReplicator.sessionID);
 
     return YES;
+}
+
+- (TDReplicator *)createReplicatorWithProperties:(NSDictionary *)properties
+                                           error:(NSError *__autoreleasing *)error
+{
+    TDStatus outStatus;
+    TDReplicator *repl = [self.dbManager replicatorWithProperties:properties status:&outStatus];
+
+    if (!repl) {
+        if (error) {
+            *error = TDStatusToNSError(outStatus, nil);
+        }
+        CDTLogWarn(CDTREPLICATION_LOG_CONTEXT, @"ReplicatorManager: Can't create replicator for %@",
+                   properties);
+        return nil;
+    }
+    repl.sessionID = TDCreateUUID();
+
+    return repl;
 }
 
 - (BOOL)stop

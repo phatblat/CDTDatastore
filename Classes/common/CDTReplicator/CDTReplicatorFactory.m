@@ -30,9 +30,7 @@ static NSString *const CDTReplicatorFactoryErrorDomain = @"CDTReplicatorFactoryE
 
 @interface CDTReplicatorFactory ()
 
-@property (nonatomic, strong) CDTDatastoreManager *manager;
-
-@property (nonatomic, strong) TDReplicatorManager *replicatorManager;
+@property (nonatomic, strong) TD_DatabaseManager *dbManager;
 
 @end
 
@@ -46,9 +44,7 @@ static NSString *const CDTReplicatorFactoryErrorDomain = @"CDTReplicatorFactoryE
     if (self) {
         
         if(dsManager){
-            _manager = dsManager;
-            TD_DatabaseManager *dbManager = dsManager.manager;
-            _replicatorManager = [[TDReplicatorManager alloc] initWithDatabaseManager:dbManager];
+            _dbManager = dsManager.manager;
         } else {
             self = nil;
             CDTLogWarn(CDTREPLICATION_LOG_CONTEXT,
@@ -79,10 +75,9 @@ static NSString *const CDTReplicatorFactoryErrorDomain = @"CDTReplicatorFactoryE
                     error:(NSError *__autoreleasing *)error
 {
     NSError *localError;
-    CDTReplicator *replicator =
-        [[CDTReplicator alloc] initWithTDReplicatorManager:self.replicatorManager
-                                               replication:replication
-                                                     error:&localError];
+    CDTReplicator *replicator = [[CDTReplicator alloc] initWithTDDatabaseManager:self.dbManager
+                                                                     replication:replication
+                                                                           error:&localError];
 
     if (replicator == nil) {
         CDTLogWarn(CDTREPLICATION_LOG_CONTEXT,
