@@ -42,17 +42,32 @@ NSString *const CDTReplicationErrorDomain = @"CDTReplicationErrorDomain";
 {
     NSMutableDictionary *doc = [[NSMutableDictionary alloc] init];
 
-    if (self.optionalHeaders) {
+    if ([CDTAbstractReplication validateOptionalHeaders:self.optionalHeaders error:error]) {
+        doc[@"headers"] = self.optionalHeaders;
+    } else {
+        return nil;
+    }
+
+    return [NSDictionary dictionaryWithDictionary:doc];
+}
+
+/**
+ Validates user supplied optional headers.
+ */
++ (BOOL)validateOptionalHeaders:(NSDictionary *)candidateHeaders
+                          error:(NSError *__autoreleasing *)error
+{
+    if (candidateHeaders) {
         NSMutableArray *lowercaseOptionalHeaders = [[NSMutableArray alloc] init];
 
         // check for strings
-        for (id key in self.optionalHeaders) {
+        for (id key in candidateHeaders) {
             if (![key isKindOfClass:[NSString class]]) {
                 CDTLogWarn(CDTREPLICATION_LOG_CONTEXT,
-                        @"CDTAbstractReplication " @"-dictionaryForReplicatorDocument Error: "
-                        @"Replication HTTP header key is invalid (%@).\n It must be NSString. "
-                        @"Found type %@",
-                        key, [key class]);
+                           @"CDTAbstractReplication " @"-dictionaryForReplicatorDocument Error: "
+                           @"Replication HTTP header key is invalid (%@).\n It must be NSString. "
+                           @"Found type %@",
+                           key, [key class]);
 
                 if (error) {
                     NSString *msg = @"Cannot sync data. Bad optional HTTP header.";
@@ -62,15 +77,15 @@ NSString *const CDTReplicationErrorDomain = @"CDTReplicationErrorDomain";
                                                  code:CDTReplicationErrorBadOptionalHttpHeaderType
                                              userInfo:userInfo];
                 }
-                return nil;
+                return NO;
             }
 
-            if (![self.optionalHeaders[key] isKindOfClass:[NSString class]]) {
+            if (![candidateHeaders[key] isKindOfClass:[NSString class]]) {
                 CDTLogWarn(CDTREPLICATION_LOG_CONTEXT,
-                        @"CDTAbstractReplication " @"-dictionaryForReplicatorDocument Error: "
-                        @"Value for replication HTTP header %@ is invalid (%@).\n"
-                        @"It must be NSString. Found type %@.",
-                        key, self.optionalHeaders[key], [self.optionalHeaders[key] class]);
+                           @"CDTAbstractReplication " @"-dictionaryForReplicatorDocument Error: "
+                           @"Value for replication HTTP header %@ is invalid (%@).\n"
+                           @"It must be NSString. Found type %@.",
+                           key, candidateHeaders[key], [candidateHeaders[key] class]);
 
                 if (error) {
                     NSString *msg = @"Cannot sync data. Bad optional HTTP header.";
@@ -80,7 +95,7 @@ NSString *const CDTReplicationErrorDomain = @"CDTReplicationErrorDomain";
                                                  code:CDTReplicationErrorBadOptionalHttpHeaderType
                                              userInfo:userInfo];
                 }
-                return nil;
+                return NO;
             }
 
             [lowercaseOptionalHeaders addObject:[(NSString *)key lowercaseString]];
@@ -106,9 +121,9 @@ NSString *const CDTReplicationErrorDomain = @"CDTReplicationErrorDomain";
 
         if ([badHeaders count] > 0) {
             CDTLogWarn(CDTREPLICATION_LOG_CONTEXT,
-                    @"CDTAbstractionReplication " @"-dictionaryForReplicatorDocument Error: "
-                    @"You may not use these prohibited headers: %@",
-                    badHeaders);
+                       @"CDTAbstractionReplication " @"-dictionaryForReplicatorDocument Error: "
+                       @"You may not use these prohibited headers: %@",
+                       badHeaders);
 
             if (error) {
                 NSString *msg = @"Cannot sync data. Bad optional HTTP header.";
@@ -118,13 +133,11 @@ NSString *const CDTReplicationErrorDomain = @"CDTReplicationErrorDomain";
                                          userInfo:userInfo];
             }
 
-            return nil;
+            return NO;
         }
-
-        doc[@"headers"] = self.optionalHeaders;
     }
 
-    return [NSDictionary dictionaryWithDictionary:doc];
+    return YES;
 }
 
 - (BOOL)validateRemoteDatastoreURL:(NSURL *)url error:(NSError *__autoreleasing *)error

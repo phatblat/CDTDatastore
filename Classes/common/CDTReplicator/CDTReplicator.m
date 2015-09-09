@@ -21,6 +21,7 @@
 #import "CDTPushReplication.h"
 #import "CDTLogging.h"
 #import "CDTDatastoreManager.h"
+#import "CDTDatastore.h"
 
 #import "TD_Revision.h"
 #import "TD_Database.h"
@@ -38,7 +39,6 @@ static NSString *const CDTReplicatorErrorDomain = @"CDTReplicatorErrorDomain";
 @property (nonatomic, strong) TD_DatabaseManager *dbManager;
 @property (nonatomic, strong) TDReplicator *tdReplicator;
 @property (nonatomic, copy) CDTAbstractReplication *cdtReplication;
-@property (nonatomic, strong) NSDictionary *replConfig;
 // private readwrite properties
 // the state property should be protected from multiple threads
 @property (nonatomic, readwrite) CDTReplicatorState state;
@@ -112,10 +112,8 @@ static NSString *const CDTReplicatorErrorDomain = @"CDTReplicatorErrorDomain";
         _dbManager = dbManager;
         _cdtReplication = [replication copy];
 
-        NSError *localError;
-        _replConfig = [_cdtReplication dictionaryForReplicatorDocument:&localError];
-        if (!_replConfig) {
-            if (error) *error = localError;
+        // Validate replicator
+        if (![_cdtReplication dictionaryForReplicatorDocument:error]) {
             return nil;
         }
 
@@ -214,7 +212,8 @@ static NSString *const CDTReplicatorErrorDomain = @"CDTReplicatorErrorDomain";
         // doing this inside @synchronized lets us be certain that self.tdReplicator is either
         // created or nil throughout the rest of the code (especially in -stop)
         NSError *localError;
-        self.tdReplicator = [self createReplicatorWithProperties:self.replConfig error:&localError];
+        self.tdReplicator =
+            [self buildTDReplicatorFromConfiguration:self.cdtReplication error:&localError];
 
         if (!self.tdReplicator) {
             self.state = CDTReplicatorStateError;
@@ -281,21 +280,66 @@ static NSString *const CDTReplicatorErrorDomain = @"CDTReplicatorErrorDomain";
     return YES;
 }
 
-- (TDReplicator *)createReplicatorWithProperties:(NSDictionary *)properties
-                                           error:(NSError *__autoreleasing *)error
+/**
+ Builds a TDReplicator object from a CDTPush/PullReplication configuration.
+ */
+- (TDReplicator *)buildTDReplicatorFromConfiguration:(CDTAbstractReplication *)configuration
+                                               error:(NSError *__autoreleasing *)error
 {
-    TDStatus outStatus;
-    TDReplicator *repl = [self.dbManager replicatorWithProperties:properties status:&outStatus];
-
-    if (!repl) {
-        if (error) {
-            *error = TDStatusToNSError(outStatus, nil);
-        }
-        CDTLogWarn(CDTREPLICATION_LOG_CONTEXT, @"ReplicatorManager: Can't create replicator for %@",
-                   properties);
+    // This both gives us the raw config for the replication, plus validates the
+    // replication settings, putting error info into `error` if we've been passed a
+    // valid out parameter.
+    NSDictionary *properties = [configuration dictionaryForReplicatorDocument:error];
+    if (!properties) {
         return nil;
     }
-    repl.sessionID = TDCreateUUID();
+
+    BOOL push = NO;
+    CDTDatastore *db;
+    NSURL *remote;
+    BOOL continuous = NO;  // we don't support continuous
+    if ([configuration isKindOfClass:[CDTPullReplication class]]) {
+        push = NO;
+        CDTPullReplication *shadowConfig = (CDTPullReplication *)configuration;
+        db = shadowConfig.target;
+        remote = shadowConfig.source;
+    } else if ([configuration isKindOfClass:[CDTPushReplication class]]) {
+        push = YES;
+        CDTPushReplication *shadowConfig = (CDTPushReplication *)configuration;
+        db = shadowConfig.source;
+        remote = shadowConfig.target;
+    }
+
+    TDReplicator *repl =
+        [[TDReplicator alloc] initWithDB:db.database remote:remote push:push continuous:continuous];
+    if (!repl) {
+        if (error) {
+            NSString *msg = [NSString
+                stringWithFormat:@"Could not initialise replicator object between %@ and %@.",
+                                 db.name, [remote absoluteString]];
+            NSDictionary *userInfo = @{NSLocalizedDescriptionKey : NSLocalizedString(msg, nil)};
+            *error = [NSError errorWithDomain:CDTReplicationErrorDomain
+                                         code:CDTReplicationErrorUndefinedSource
+                                     userInfo:userInfo];
+        }
+        return nil;
+    }
+
+    // Assign replicator the raw options
+    repl.options = properties;
+
+    // Headers are validated before being put in properties
+    repl.requestHeaders = properties[@"headers"];
+
+    // Pull replications can have filters assigned.
+    if ([configuration isKindOfClass:[CDTPullReplication class]]) {
+        CDTPullReplication *shadowConfig = (CDTPullReplication *)configuration;
+        repl.filterName = shadowConfig.filter;
+        repl.filterParameters = shadowConfig.filterParams;
+    }
+
+    //    repl.authorizer = authorizer;  // we don't support authorisers
+    if (push) ((TDPusher *)repl).createTarget = NO;
 
     return repl;
 }
