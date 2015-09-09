@@ -20,7 +20,6 @@
 #import "CDTDatastore.h"
 #import "CDTReplicatorFactory.h"
 #import "CDTReplicator.h"
-#import "TDReplicatorManager.h"
 #import "CDTDocumentRevision.h"
 #import "TD_Body.h"
 #import "TD_Revision.h"
@@ -61,16 +60,6 @@
     NSDictionary *pullDict = [pull dictionaryForReplicatorDocument:&error];
     XCTAssertNil(error, @"Error creating dictionary. %@. Replicator: %@", error, pull);
     XCTAssertEqualObjects(pullDict, expectedDictionary, @"pull dictionary: %@", pullDict);
-    
-    //ensure that TDReplicatorManager makes the appropriate TDPuller object
-    //The code to do this, seems, a bit precarious and this guards against any future
-    //changes that could affect this process.
-    error = nil;
-    TDReplicatorManager *replicatorManager = [[TDReplicatorManager alloc]
-                                              initWithDatabaseManager:self.factory.manager];
-    TDReplicator *tdreplicator = [replicatorManager createReplicatorWithProperties:pullDict
-                                                                             error:&error];
-    XCTAssertEqualObjects([tdreplicator class], [TDPuller class], @"Wrong Type of TDReplicator. %@", error);
 }
 
 -(void)testDictionaryForPushReplicationDocument
@@ -90,16 +79,6 @@
     NSDictionary *pushDict = [push dictionaryForReplicatorDocument:&error];
     XCTAssertNil(error, @"Error creating dictionary. %@. Replicator: %@", error, push);
     XCTAssertEqualObjects(pushDict, expectedDictionary, @"push dictionary: %@", pushDict);
-    
-    //ensure that TDReplicatorManager makes the appropriate TDPuller object
-    //The code to do this, seems, a bit precarious and this guards against any future
-    //changes that could affect this process.
-    error = nil;
-    TDReplicatorManager *replicatorManager = [[TDReplicatorManager alloc]
-                                              initWithDatabaseManager:self.factory.manager];
-    TDReplicator *tdreplicator = [replicatorManager createReplicatorWithProperties:pushDict
-                                                                             error:&error];
-    XCTAssertEqualObjects([tdreplicator class], [TDPusher class], @"Wrong Type of TDReplicator. %@", error);
 }
 
 
@@ -130,16 +109,6 @@
     
     XCTAssertTrue(push.filter != nil, @"No filter set in CDTPushReplication");
     XCTAssertEqualObjects(@{@"param1":@"foo"}, pushDoc[@"query_params"], @"\n%@", pushDoc);
-    
-    //ensure that TDReplicatorManager makes the appropriate TDPuller object
-    //The code to do this, seems, a bit precarious and this guards against any future
-    //changes that could affect this process.
-    error = nil;
-    TDReplicatorManager *replicatorManager = [[TDReplicatorManager alloc]
-                                              initWithDatabaseManager:self.factory.manager];
-    TDReplicator *tdreplicator = [replicatorManager createReplicatorWithProperties:pushDoc
-                                                                             error:&error];
-    XCTAssertEqualObjects([tdreplicator class], [TDPusher class], @"Wrong Type of TDReplicator. %@", error);
 }
 
 -(CDTAbstractReplication *)buildReplicationObject:(Class)aClass remoteUrl:(NSURL *)url
@@ -347,7 +316,7 @@
                        @"header: %@, pullDoc: %@", optionalHeaders, pullDoc);
         XCTAssertNotNil(error, @"Error was not set");
         XCTAssertEqual(error.code, CDTReplicationErrorProhibitedOptionalHttpHeader,
-                       @"Wrote error code: %@", error.code);
+                       @"Wrote error code: %ld", (long)error.code);
     }
     //make sure the lower case versions fail too
     for (NSString* prohibitedHeader in prohibitedLowerArray) {
@@ -359,7 +328,7 @@
                     @"header: %@, pullDoc: %@", optionalHeaders, pullDoc);
         XCTAssertNotNil(error, @"Error was not set");
         XCTAssertEqual(error.code, CDTReplicationErrorProhibitedOptionalHttpHeader,
-                       @"Wrote error code: %@", error.code);
+                       @"Wrote error code: %ld", (long)error.code);
     }
 }
 

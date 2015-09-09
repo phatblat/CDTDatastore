@@ -556,12 +556,6 @@
                location = "group:TDReplicator.m">
             </FileRef>
             <FileRef
-               location = "group:TDReplicatorManager.h">
-            </FileRef>
-            <FileRef
-               location = "group:TDReplicatorManager.m">
-            </FileRef>
-            <FileRef
                location = "group:TDSequenceMap.h">
             </FileRef>
             <FileRef

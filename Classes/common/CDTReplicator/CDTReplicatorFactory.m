@@ -24,8 +24,6 @@
 #import "CDTDocumentRevision.h"
 #import "CDTLogging.h"
 
-#import "TDReplicatorManager.h"
-
 static NSString *const CDTReplicatorFactoryErrorDomain = @"CDTReplicatorFactoryErrorDomain";
 
 @interface CDTReplicatorFactory ()
