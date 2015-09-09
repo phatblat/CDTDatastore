@@ -28,8 +28,8 @@
 		8E82CAB11A83C3700046DA9D /* schema6to7upgrade.touchdb in Resources */ = {isa = PBXBuildFile; fileRef = 8E82CAB01A83C3670046DA9D /* schema6to7upgrade.touchdb */; };
 		8E82CAB21A83C3700046DA9D /* schema6to7upgrade.touchdb in Resources */ = {isa = PBXBuildFile; fileRef = 8E82CAB01A83C3670046DA9D /* schema6to7upgrade.touchdb */; };
 		9823C84B1B8B1ECD00154EC5 /* CDTURLSessionTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 9823C84A1B8B1ECD00154EC5 /* CDTURLSessionTests.m */; };
-		985849EE1BA07741009475C9 /* CDTCookieInterceptorTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 985849ED1BA07741009475C9 /* CDTCookieInterceptorTests.m */; settings = {ASSET_TAGS = (); }; };
-		985849EF1BA07741009475C9 /* CDTCookieInterceptorTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 985849ED1BA07741009475C9 /* CDTCookieInterceptorTests.m */; settings = {ASSET_TAGS = (); }; };
+		985849EE1BA07741009475C9 /* CDTSessionCookieInterceptorTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 985849ED1BA07741009475C9 /* CDTSessionCookieInterceptorTests.m */; settings = {ASSET_TAGS = (); }; };
+		985849EF1BA07741009475C9 /* CDTSessionCookieInterceptorTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 985849ED1BA07741009475C9 /* CDTSessionCookieInterceptorTests.m */; settings = {ASSET_TAGS = (); }; };
 		985A188719D2CC54000283E9 /* CDTDatastoreEvents.m in Sources */ = {isa = PBXBuildFile; fileRef = 985A188619D2CC54000283E9 /* CDTDatastoreEvents.m */; };
 		985A188819D2CC54000283E9 /* CDTDatastoreEvents.m in Sources */ = {isa = PBXBuildFile; fileRef = 985A188619D2CC54000283E9 /* CDTDatastoreEvents.m */; };
 		985A188A19D2CCEB000283E9 /* DatastoreConflicts.m in Sources */ = {isa = PBXBuildFile; fileRef = 985A188919D2CCEB000283E9 /* DatastoreConflicts.m */; };
@@ -200,7 +200,7 @@
 		635BE7F70A3A4DFFA9455CDC /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		8E82CAB01A83C3670046DA9D /* schema6to7upgrade.touchdb */ = {isa = PBXFileReference; lastKnownFileType = file; name = schema6to7upgrade.touchdb; path = Assets/schema6to7upgrade.touchdb; sourceTree = "<group>"; };
 		9823C84A1B8B1ECD00154EC5 /* CDTURLSessionTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CDTURLSessionTests.m; sourceTree = "<group>"; };
-		985849ED1BA07741009475C9 /* CDTCookieInterceptorTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CDTCookieInterceptorTests.m; sourceTree = "<group>"; };
+		985849ED1BA07741009475C9 /* CDTSessionCookieInterceptorTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CDTSessionCookieInterceptorTests.m; sourceTree = "<group>"; };
 		985A188619D2CC54000283E9 /* CDTDatastoreEvents.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = CDTDatastoreEvents.m; path = Events/CDTDatastoreEvents.m; sourceTree = "<group>"; };
 		985A188919D2CCEB000283E9 /* DatastoreConflicts.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DatastoreConflicts.m; sourceTree = "<group>"; };
 		985F84D3198BD3A4004D8713 /* AttachmentCRUD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AttachmentCRUD.m; path = Attachments/AttachmentCRUD.m; sourceTree = "<group>"; };
@@ -494,7 +494,7 @@
 			children = (
 				989158DD1B8B7D6300FFF509 /* CDTURLSessionTaskTests.m */,
 				9823C84A1B8B1ECD00154EC5 /* CDTURLSessionTests.m */,
-				985849ED1BA07741009475C9 /* CDTCookieInterceptorTests.m */,
+				985849ED1BA07741009475C9 /* CDTSessionCookieInterceptorTests.m */,
 			);
 			name = HTTP;
 			sourceTree = "<group>";
@@ -779,7 +779,7 @@
 				EC0C83481AB217290051042F /* CDTQPerformanceTests.m in Sources */,
 				EC0C835C1AB217290051042F /* CDTQMatcherQueryExecutor.m in Sources */,
 				989E6E22198799AE00FB8510 /* DatastoreCRUD.m in Sources */,
-				985849EE1BA07741009475C9 /* CDTCookieInterceptorTests.m in Sources */,
+				985849EE1BA07741009475C9 /* CDTSessionCookieInterceptorTests.m in Sources */,
 				9F0D241A18932DA700D3D04E /* TDSequenceMapTests.m in Sources */,
 				9FC082981913378F0024EA1E /* DatastoreConflictResolvers.m in Sources */,
 				EC0C83621AB217290051042F /* Tests.m in Sources */,
@@ -859,7 +859,7 @@
 				EC1D10881B27514300B98462 /* CDTQContainsInAnyOrderMatcher.m in Sources */,
 				CD2188E41AE571410036F59F /* CDTEncryptionKeychainUtilsAESTests.m in Sources */,
 				EC0C83491AB217290051042F /* CDTQPerformanceTests.m in Sources */,
-				985849EF1BA07741009475C9 /* CDTCookieInterceptorTests.m in Sources */,
+				985849EF1BA07741009475C9 /* CDTSessionCookieInterceptorTests.m in Sources */,
 				EC0C835D1AB217290051042F /* CDTQMatcherQueryExecutor.m in Sources */,
 				989E6E23198799AE00FB8510 /* DatastoreCRUD.m in Sources */,
 				9F0D241B18932DA700D3D04E /* TDSequenceMapTests.m in Sources */,
