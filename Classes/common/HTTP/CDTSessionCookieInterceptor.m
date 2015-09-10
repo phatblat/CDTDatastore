@@ -29,12 +29,21 @@
 
 - (instancetype)initWithUsername:(NSString *)username password:(NSString *)password
 {
+    NSURLSessionConfiguration *config = [NSURLSessionConfiguration ephemeralSessionConfiguration];
+    return [self initWithUsername:username
+                         password:password
+                          session:[NSURLSession sessionWithConfiguration:config]];
+}
+
+- (instancetype)initWithUsername:(NSString *)username
+                        password:(NSString *)password
+                         session:(NSURLSession *)session
+{
     self = [super init];
     if (self) {
         _cookieRequestBody = [NSString stringWithFormat:@"name=%@&password=%@", username, password];
         _shouldMakeCookieRequest = YES;
-        NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
-        _urlSession = [NSURLSession sessionWithConfiguration:config];
+        _urlSession = session;
     }
     return self;
 }

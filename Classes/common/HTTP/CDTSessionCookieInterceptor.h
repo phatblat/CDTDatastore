@@ -21,7 +21,11 @@
 
 - (nullable instancetype)init NS_UNAVAILABLE;
 
-- (nullable instancetype)initWithUsername:(nonnull NSString*)username
-                                 password:(nonnull NSString*)password NS_DESIGNATED_INITIALIZER;
+- (nullable instancetype)initWithUsername:(nonnull NSString *)username
+                                 password:(nonnull NSString *)password;
+
+- (nullable instancetype)initWithUsername:(nonnull NSString *)username
+                                 password:(nonnull NSString *)password
+                                  session:(nonnull NSURLSession *)session NS_DESIGNATED_INITIALIZER;
 
 @end

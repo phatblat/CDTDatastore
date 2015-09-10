@@ -22,7 +22,6 @@
 
 @property (nonatomic) BOOL shouldMakeCookieRequest;
 @property (nullable, strong, nonatomic) NSString *cookie;
-@property (nonnull, nonatomic, strong) NSURLSession *urlSession;
 
 @end
 
@@ -96,16 +95,18 @@
 - (void)testCookieInterceptorSuccessfullyGetsCookie
 {
     NSString *expectedCookieString = @"AuthSession=cm9vdDo1MEJCRkYwMjq0LO0ylOIwShrgt8y-UkhI-c6BGw";
-    CDTSessionCookieInterceptor *interceptor =
-        [[CDTSessionCookieInterceptor alloc] initWithUsername:@"username" password:@"password"];
 
     // override the NSURLSession so we can stub the responses
-    NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
+    NSURLSessionConfiguration *config = [NSURLSessionConfiguration ephemeralSessionConfiguration];
     config.protocolClasses = @[ [CookieResponseURLProtocol class] ];
-    interceptor.urlSession = [NSURLSession sessionWithConfiguration:config];
+
+    CDTSessionCookieInterceptor *interceptor = [[CDTSessionCookieInterceptor alloc]
+        initWithUsername:@"username"
+                password:@"password"
+                 session:[NSURLSession sessionWithConfiguration:config]];
 
     // create a context with a request which we can use
-    NSURL *url = [NSURL URLWithString:@"http://username.cloudant.com"];
+    NSURL *url = [NSURL URLWithString:@"cdtdatastore-cookie://username.cloudant.com"];
     NSURLRequest *request = [NSURLRequest requestWithURL:url];
 
     CDTHTTPInterceptorContext *context =
@@ -121,16 +122,17 @@
 
 - (void)testCookieInterceptorHandles401
 {
-    CDTSessionCookieInterceptor *interceptor =
-        [[CDTSessionCookieInterceptor alloc] initWithUsername:@"username" password:@"password"];
-
     // override the NSURLSession so we can stub the responses
-    NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
+    NSURLSessionConfiguration *config = [NSURLSessionConfiguration ephemeralSessionConfiguration];
     config.protocolClasses = @[ [Always401UrlProtocol class] ];
-    interceptor.urlSession = [NSURLSession sessionWithConfiguration:config];
+
+    CDTSessionCookieInterceptor *interceptor = [[CDTSessionCookieInterceptor alloc]
+        initWithUsername:@"username"
+                password:@"password"
+                 session:[NSURLSession sessionWithConfiguration:config]];
 
     // create a context with a request which we can use
-    NSURL *url = [NSURL URLWithString:@"http://username.cloudant.com"];
+    NSURL *url = [NSURL URLWithString:@"cdtdatastore-cookie://username.cloudant.com"];
     NSURLRequest *request = [NSURLRequest requestWithURL:url];
 
     CDTHTTPInterceptorContext *context =
