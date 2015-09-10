@@ -83,6 +83,7 @@
     request.HTTPBody = [self.cookieRequestBody dataUsingEncoding:NSUTF8StringEncoding];
     [request setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
 
+    dispatch_semaphore_t sema = dispatch_semaphore_create(0);
     __block NSString *cookie = nil;
     NSURLSessionDataTask *task = [self.urlSession
         dataTaskWithRequest:request
@@ -122,12 +123,11 @@
                             (long)[httpResp statusCode]);
             }
 
+            dispatch_semaphore_signal(sema);
+
           }];
     [task resume];
-
-    while (task.state != NSURLSessionTaskStateCompleted) {
-        [NSThread sleepForTimeInterval:0.1f];
-    }
+    dispatch_semaphore_wait(sema, dispatch_time(DISPATCH_TIME_NOW, 600 * NSEC_PER_SEC));
 
     return cookie;
 }
