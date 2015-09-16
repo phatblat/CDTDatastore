@@ -153,9 +153,48 @@ SpecBegin(CDTQFilterFieldsTest)
             }];
         });
 
+        context(@"projected revisions", ^{
+
+            it(@"cannot be saved until copied", ^{
+                NSDictionary *query = @{ @"name" : @"mike", @"age" : @12 };
+                CDTQResultSet *result =
+                    [im find:query skip:0 limit:NSUIntegerMax fields:@[ @"name" ] sort:nil];
+                expect(result.documentIds.count).to.equal(1);
+
+                __block CDTDocumentRevision *projected = nil;
+
+                [result
+                    enumerateObjectsUsingBlock:^(CDTDocumentRevision *rev, NSUInteger i, BOOL *s) {
+                        projected = rev;
+                        *s = YES;
+                    }];
+
+                expect(projected.body.count).to.equal(1);
+                expect(projected.body[@"name"]).to.equal(@"mike");
+
+                NSError *error;
+                CDTDocumentRevision *pRev = [ds updateDocumentFromRevision:projected error:&error];
+                expect(pRev).to.beNil();
+                expect(error.localizedDescription)
+                    .to.equal(@"Possibly trying to save projected query result.");
+                expect(error.localizedFailureReason)
+                    .to.equal(@"Trying to save revision where isFullVersion is NO");
+                expect(error.localizedRecoverySuggestion)
+                    .to.equal(@"Try calling -copy on projected revisions before saving.");
+
+                CDTDocumentRevision *copy = [projected copy];
+                expect(copy.body.count).to.equal(3);
+                expect(copy.body[@"name"]).to.equal(@"mike");
+                expect(copy.body[@"age"]).to.equal(@12);
+                expect(copy.body[@"pet"]).to.equal(@"cat");
+                expect([ds updateDocumentFromRevision:copy error:nil]).toNot.beNil();
+            });
+
+        });
+
         context(@"mutableCopy of projected doc", ^{
 
-            xit(@"returns full doc", ^{
+            it(@"returns full doc", ^{
                 NSDictionary *query = @{ @"name" : @"mike", @"age" : @12 };
                 CDTQResultSet *result =
                     [im find:query skip:0 limit:NSUIntegerMax fields:@[ @"name" ] sort:nil];
@@ -174,7 +213,7 @@ SpecBegin(CDTQFilterFieldsTest)
                     }];
             });
 
-            xit(@"returns nil when doc updated", ^{
+            it(@"returns nil when doc updated", ^{
                 NSDictionary *query = @{ @"name" : @"mike", @"age" : @12 };
                 CDTQResultSet *result =
                     [im find:query skip:0 limit:NSUIntegerMax fields:@[ @"name" ] sort:nil];
@@ -196,7 +235,7 @@ SpecBegin(CDTQFilterFieldsTest)
                     }];
             });
 
-            xit(@"returns nil when doc deleted", ^{
+            it(@"returns nil when doc deleted", ^{
                 NSDictionary *query = @{ @"name" : @"mike", @"age" : @12 };
                 CDTQResultSet *result =
                     [im find:query skip:0 limit:NSUIntegerMax fields:@[ @"name" ] sort:nil];
